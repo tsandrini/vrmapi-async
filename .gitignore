@@ -2,16 +2,6 @@
 # Nix/NixOS
 # ---------
 
-age/
-
-# home-manager
-tsandrini-*-link
-!parts/**/tsandrini
-
-# tmp
-etc/dotfiles/config/wal/templates/Xresources
-etc/dotfiles/config/wal/templates/dunstrc
-
 ## Builds
 build/
 result
