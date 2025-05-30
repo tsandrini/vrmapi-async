@@ -8,6 +8,7 @@
   nix-output-monitor,
   nixfmt-rfc-style,
   writeShellScriptBin,
+  nix-fast-build,
   treefmt-wrapper ? null,
   dev-process ? null,
   pre-commit ? null,
@@ -41,6 +42,7 @@ mkShell {
       deadnix # Find and remove unused code in .nix source files
       nix-output-monitor # Processes output of Nix commands to show helpful and pretty information
       nixfmt-rfc-style # An opinionated formatter for Nix
+      nix-fast-build # A tool to speed up Nix builds by caching build results
 
       # -- GIT RELATED UTILS --
       commitizen # Tool to create committing rules for projects, auto bump versions, and generate changelogs

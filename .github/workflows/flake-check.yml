@@ -1,0 +1,65 @@
+# --- Run `nix flake check`
+name: nix flake check
+
+on:
+  workflow_dispatch: # allows manual triggering from the Actions UI
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
+  repository_dispatch:
+    types: [create-pull-request]
+
+env:
+  BUILD_OPTS: >-
+    --no-nom
+    --no-link
+    --skip-cached
+    --option accept-flake-config true
+
+jobs:
+  flake-check:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checking out repository..."
+        uses: actions/checkout@v4
+
+      - name: "Cleaning up the GitHub runner from default bloat..."
+        uses: wimpysworld/nothing-but-nix@main
+
+      - name: "Installing and configuring the nix package manager..."
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            accept-flake-config = true
+            allow-import-from-derivation = true
+
+      - name: "Settings up cachix binary cache..."
+        uses: cachix/cachix-action@v16
+        with:
+          name: tsandrini
+          # If you chose API tokens for write access OR if you have a private cache
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
+      - name: "Entering developer environment..."
+        uses: HatsuneMiku3939/direnv-action@v1
+
+      - name: "Building `.#checks` attribute..."
+        run: nix-fast-build ${BUILD_OPTS} --flake '.#checks'
+        # run: nix flake check --accept-flake-config
+
+      - name: "Building `.#packages` attribute..."
+        run: nix-fast-build ${BUILD_OPTS} --flake '.#packages'
+
+      - name: "Building `.#devShells` attribute..."
+        run: nix-fast-build ${BUILD_OPTS} --flake '.#devShells'
+
+      # - name: "Running `pytest` ..."
+      #   run: |
+      #     set -e
+      #     uv sync
+      #     pytest
+
+      - name: "Checking flake inputs for stale & insecure nixpkgs versions..."
+        uses: DeterminateSystems/flake-checker-action@main
