@@ -113,7 +113,7 @@ class VRMAsyncAPI:
             data = response.json()
             login_data = LoginResponse(**data)
             self._auth_token = login_data.token
-            self.user_id = login_data.id_user
+            self.user_id = login_data.user_id
             logger.info(f"Successfully logged in as user {self.user_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code in (401, 403):

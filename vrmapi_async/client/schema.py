@@ -8,7 +8,7 @@ class LoginResponse(BaseResponseModel):
 
     # -- DEFINED BY VRMAPI DOCS --
     token: str
-    id_user: int = Field(..., alias="idUser")
+    user_id: int = Field(..., alias="idUser")
     verification_mode: str
     verification_sent: bool
     # -- UNDOCUMENTED --
