@@ -2,9 +2,20 @@
 """Pydantic models for VRM API responses."""
 
 from pydantic import Field, ConfigDict, field_validator, Json
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Dict
 
 from vrmapi_async.client.base.schema import BaseModel, BaseResponseModel
+
+
+class User(BaseModel):
+
+    # -- DEFINED BY DOCS --
+    user_id: int = Field(..., alias="id")
+    name: str
+    email: str
+    country: str
+    # -- UNDOCUMENTED --
+    id_access_token: Optional[int] = Field(None, alias="idAccessToken")
 
 
 class Site(BaseModel):
@@ -13,7 +24,7 @@ class Site(BaseModel):
     Strictly defines fields expected in the non-extended response.
     """
 
-    # -- DEFINED BY VRMAPI DOCS --
+    # -- DEFINED BY DOCS --
     id_site: int = Field(..., alias="idSite")
     access_level: int = Field(..., alias="accessLevel")
     owner: bool
@@ -102,21 +113,38 @@ class UserSitesExtendedResponse(BaseResponseModel):
 class AccessToken(BaseModel):
     """Model for an access token."""
 
-    id_access_token: int = Field(..., alias="idAccessToken")
+    # -- DEFINED BY DOCS --
+    id_access_token: int = Field(..., alias="idAccessToken")  # NOTE: docs says str
     name: str
     created_on: int = Field(..., alias="createdOn")
     scope: str
     expires: Optional[int] = None
+    # -- UNDOCUMENTED --
     last_seen: Optional[int] = Field(None, alias="lastSeen")
     last_successful_auth: Optional[int] = Field(None, alias="lastSuccessfulAuth")
+
+
+class InstallationSearchResult(BaseModel):
+    # NOTE: Docs say that all of these fields are optional, they don't seem to be
+    site_id: int
+    site_identifier: str
+    site_name: str
+    avatar_url: Optional[str] = None
+    highlight: Dict[str, List[str]]
+
+
+class InstallationSearchResponse(BaseResponseModel):
+    success: bool
+    count: int
+    results: List[InstallationSearchResult]
 
 
 class CreateAccessTokenResponse(BaseResponseModel):
     """Response model for creating an access token."""
 
     success: bool
-    token: AccessToken
-    id_access_token: str
+    token: str
+    id_access_token: int = Field(..., alias="idAccessToken")  # NOTE: docs says str
 
 
 class UsersListAccessTokensResponse(BaseResponseModel):
@@ -124,3 +152,54 @@ class UsersListAccessTokensResponse(BaseResponseModel):
 
     success: bool
     tokens: List[AccessToken]
+
+
+# TODO: API returns a JSON returns object with a single key 'site_id' for this endpoint.
+#       But this is also the most flexible way in case they add additional stuff
+#       into the records object in the future.
+class SiteId(BaseModel):
+    site_id: int
+
+
+class RevokeAccessTokenData(BaseModel):
+    removed: int
+
+
+class SiteIdByIdentifierResponse(BaseResponseModel):
+    """
+    Response model for getting a site ID by installation identifier.
+    Mainly used for the records.site_id field.
+    """
+
+    success: bool
+    records: SiteId
+
+
+class CreateInstallationResponse(BaseResponseModel):
+    """
+    Response model for creating a new installation.
+    Contains the created Site object.
+    """
+
+    success: bool
+    records: SiteId
+
+
+class AboutMeResponse(BaseResponseModel):
+    """
+    Response model for the 'about me' endpoint that returns information
+    about the currently authenticated user.
+    """
+
+    success: bool
+    user: User
+
+
+class RevokeAccessTokenResponse(BaseResponseModel):
+    """
+    Response model for revoking an access token.
+    Contains the ID of the revoked access token.
+    """
+
+    success: bool
+    data: RevokeAccessTokenData

@@ -9,9 +9,16 @@ class VRMRoutes:
     AUTH_LOGOUT: str = "/auth/logout"
     AUTH_DEMO: str = "/auth/loginAsDemo"
 
-    USERS_INSTALLATIONS: str = "/users/{user_id}/installations"
+    USERS_ABOUTME: str = "/users/me"
+    USERS_INSTALLATIONS_LIST: str = "/users/{user_id}/installations"
+    USERS_INSTALLATIONS_SEARCH: str = "/users/{user_id}/search"
+    USERS_INSTALLATIONS_ID_BY_IDENTIFIER: str = "/users/{user_id}/get-site-id"
+    USERS_INSTALLATIONS_CREATE: str = "/users/{user_id}/addsite"
     USERS_ACCESSTOKENS_LIST: str = "/users/{user_id}/accesstokens/list"
     USERS_ACCESSTOKENS_CREATE: str = "/users/{user_id}/accesstokens/create"
+    USERS_ACCESSTOKENS_REVOKE: str = (
+        "/users/{user_id}/accesstokens/{id_access_token}/revoke"
+    )
 
     INSTALLATIONS_STATS: str = "/installations/{site_id}/stats"
     INSTALLATIONS_OVERALL_STATS: str = "/installations/{site_id}/overallstats"

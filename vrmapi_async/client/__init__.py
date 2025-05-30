@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any, Type
 import httpx
 
 from vrmapi_async.exceptions import VRMAuthenticationError, VRMAPIRequestError
-from vrmapi_async.client.schema import LoginResponse
+from vrmapi_async.client.schema import LoginResponse, DemoLoginResponse
 from vrmapi_async.routes import VRMRoutes
 from vrmapi_async.client.users.api import UsersNamespace
 from vrmapi_async.client.installations.api import InstallationsNamespace
@@ -144,7 +144,7 @@ class VRMAsyncAPI:
         try:
             response = await self._client.post(
                 self.routes.AUTH_LOGOUT,
-                headers={"X-Authorization": "Bearer " + self._auth_token},
+                headers={"X-Authorization": f"Bearer {self._auth_token}"},
             )
             response.raise_for_status()
             logger.info(f"Successfully logged out user {self.username}")
@@ -172,9 +172,9 @@ class VRMAsyncAPI:
             response.raise_for_status()
             data = response.json()
             data["idUser"] = DEMO_USER_ID  # Ensure demo user ID is set
-            login_data = LoginResponse(**data)
+            login_data = DemoLoginResponse(**data)
             self._auth_token = login_data.token
-            # self.user_id = login_data.id_user  # TODO: Demo user might not have a useful ID
+            self.user_id = login_data.user_id
             logger.info("Successfully logged in as demo user.")
         except httpx.HTTPStatusError as e:
             raise VRMAPIRequestError(
