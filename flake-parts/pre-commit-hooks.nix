@@ -44,7 +44,7 @@
             ruff = {
               enable = true;
               name = "check with ruff";
-              entry = "poetry run ruff";
+              entry = "uv run ruff";
               language = "system";
               pass_filenames = false;
               always_run = true;
@@ -57,12 +57,13 @@
               types = [ "python" ];
             };
 
-            # mypy = {
-            #   enable = true;
-            #   types = [ "python" ];
-            #   pass_filenames = false;
-            #   args = [ "vrmapi_async" ];
-            # };
+            mypy = {
+              enable = true;
+              types = [ "python" ];
+              pass_filenames = false;
+              args = [ "vrmapi_async" ];
+              entry = "uv run mypy";
+            };
           };
         };
     };
