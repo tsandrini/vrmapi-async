@@ -1,9 +1,16 @@
+import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
 
 from vrmapi_async.utils import datetime_to_epoch
 from vrmapi_async.client.base.api import BaseNamespace
-from .schema import ConsumptionStatsResponse
+from .schema import (
+    ConsumptionStatsResponse,
+    ListUsersResponse,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 class InstallationsNamespace(BaseNamespace):
@@ -31,3 +38,11 @@ class InstallationsNamespace(BaseNamespace):
         url = self.routes.INSTALLATIONS_STATS.format(site_id=site_id)
         response_data = await self._request("GET", url, params=params)
         return ConsumptionStatsResponse(**response_data)
+
+    async def list_users(self, site_id: int) -> ListUsersResponse:
+        logger.warning(
+            "`list_users` endpoint is not documented in the official VRM API docs"
+        )
+        url = self.routes.INSTALLATIONS_USERS_LIST.format(site_id=site_id)
+        response_data = await self._request("GET", url)
+        return ListUsersResponse(**response_data)

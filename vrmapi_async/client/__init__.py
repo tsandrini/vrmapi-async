@@ -46,6 +46,7 @@ class VRMAsyncAPI:
         :param base_url: The base URL for the VRM API.
         :param headers: Optional dictionary of global headers for all requests.
         :routes_cls: Optional custom routes class to use for API endpoints if you want to override the default routes.
+        :raises ValueError: If no authentication method is provided or if multiple methods are provided. Also raises if the provided token/user_id_for_token or username/password are not properly paired.
         """
         auth_methods = sum(
             [
@@ -229,7 +230,18 @@ class VRMAsyncAPI:
         json_data: Optional[Dict] = None,
         headers: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
-        """Internal wrapper to make authenticated API requests."""
+        """
+        Internal wrapper for making authenticated API requests with additional
+        global set headers and error handling.
+
+        :param method: HTTP method (GET, POST, etc.)
+        :param url: The endpoint URL to request.
+        :param params: Optional dictionary of the query parameters.
+        :param json_data: Optional dictionary of JSON data to send in the request body.
+        :param headers: Optional dictionary of additional headers to include in the request.
+        :returns: Parsed JSON response as a dictionary.
+        :raises VRMAPIRequestError: If the request fails or the API indicates an error.
+        """
         if not self._auth_token:
             raise VRMAuthenticationError("Not logged in. Call connect() first.")
 

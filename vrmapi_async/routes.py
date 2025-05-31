@@ -17,11 +17,12 @@ class VRMRoutes:
     USERS_ACCESSTOKENS_LIST: str = "/users/{user_id}/accesstokens/list"
     USERS_ACCESSTOKENS_CREATE: str = "/users/{user_id}/accesstokens/create"
     USERS_ACCESSTOKENS_REVOKE: str = (
-        "/users/{user_id}/accesstokens/{id_access_token}/revoke"
+        "/users/{user_id}/accesstokens/{access_token_id}/revoke"
     )
 
     INSTALLATIONS_STATS: str = "/installations/{site_id}/stats"
     INSTALLATIONS_OVERALL_STATS: str = "/installations/{site_id}/overallstats"
     INSTALLATIONS_DIAGNOSTICS: str = "/installations/{site_id}/diagnostics"
+    INSTALLATIONS_USERS_LIST: str = "/installations/{site_id}/users"
 
     INSTALLATIONS_WIDGETS: str = "/installations/{site_id}/widgets/{widget_type}"

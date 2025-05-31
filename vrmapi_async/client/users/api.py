@@ -64,6 +64,8 @@ class UsersNamespace(BaseNamespace):
         """
         Gets the site ID for a user by their installation identifier.
 
+        :param user_id: user_id of the user to fetch the site ID for
+        :param identifier: The installation identifier to search for
         :returns: SiteIdByIdentifierResponse containing the SiteId object
         """
         url = self.routes.USERS_INSTALLATIONS_ID_BY_IDENTIFIER.format(user_id=user_id)
@@ -113,13 +115,15 @@ class UsersNamespace(BaseNamespace):
         """
         Creates a new access token for the user.
 
+        WARNING: This is currently broken on the VRM API side.
+
         :param user_id: user_id of the user to create an access token for
         :param name: Name for the new access token
         :param expiry: Optional expiry time for the token, can be an int (epoch time) or a datetime object
         :returns: CreateAccessTokenResponse containing the created AccessToken object
         """
         logger.warning(
-            "The create_access_token endpoint seems to be currently broken in the API."
+            "The `create_access_token` endpoint seems to be currently broken in the VRM API."
         )
         url = self.routes.USERS_ACCESSTOKENS_CREATE.format(user_id=user_id)
         params: Dict[str, Any] = {"name": name}
@@ -132,17 +136,17 @@ class UsersNamespace(BaseNamespace):
         return CreateAccessTokenResponse(**response_data)
 
     async def revoke_access_token(
-        self, user_id: int, id_access_token: int
+        self, user_id: int, access_token_id: int
     ) -> RevokeAccessTokenResponse:
         """
-        Revokes an access token for the user by its id_access_token.
+        Revokes an access token for the user by its access_token_id.
 
         :param user_id: user_id of the user to revoke the access token for
-        :param id_access_token: The ID of the access token to revoke
+        :param access_token_id: The ID of the access token to revoke
         :returns: RevokeAccessTokenResponse indicating the success of the operation
         """
         url = self.routes.USERS_ACCESSTOKENS_REVOKE.format(
-            user_id=user_id, id_access_token=id_access_token
+            user_id=user_id, access_token_id=access_token_id
         )
         response_data = await self._request("GET", url)
         return RevokeAccessTokenResponse(**response_data)

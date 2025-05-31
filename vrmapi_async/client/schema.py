@@ -1,5 +1,4 @@
 from pydantic import Field
-from typing import Optional
 
 from vrmapi_async.client.base.schema import BaseResponseModel
 
@@ -22,7 +21,7 @@ class DemoLoginResponse(BaseResponseModel):
     # -- DEFINED BY VRMAPI DOCS --
     token: str
     user_id: int = Field(..., alias="idUser")
-    verification_mode: Optional[str] = None
-    verification_sent: Optional[bool] = None
+    verification_mode: str | None = None
+    verification_sent: bool | None = None
     # -- UNDOCUMENTED --
-    status: Optional[str] = None
+    status: str | None = None

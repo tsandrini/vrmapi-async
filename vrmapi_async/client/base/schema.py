@@ -1,5 +1,12 @@
+from typing import Annotated
+
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import ConfigDict
+from pydantic import ConfigDict, AliasChoices, Field
+from vrmapi_async.utils import snake_case_to_camel_case
+
+UserIdField = Annotated[
+    int, Field(validation_alias=AliasChoices("user_id", "id_user", "idUser", "userId"))
+]
 
 
 class BaseTemplateModel(PydanticBaseModel):
@@ -8,9 +15,11 @@ class BaseTemplateModel(PydanticBaseModel):
     Mainly used to override global configuration settings.
     """
 
-    pass
-
-    # model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    model_config = ConfigDict(
+        alias_generator=lambda field_name: snake_case_to_camel_case(field_name),
+        extra="allow",  # TODO change in prod
+        validate_by_name=True,
+    )
 
 
 class BaseModel(BaseTemplateModel):
@@ -19,9 +28,7 @@ class BaseModel(BaseTemplateModel):
     Inherits from BaseTemplateModel to apply global configuration.
     """
 
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
-    # This is the default behavior, but we can override it in specific models
-    # if needed. For now, we keep it strict to avoid unexpected fields.
+    pass
 
 
 class BaseResponseModel(BaseTemplateModel):
@@ -30,4 +37,19 @@ class BaseResponseModel(BaseTemplateModel):
     Inherits from BaseTemplateModel to apply global configuration.
     """
 
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    pass
+
+
+class BaseUser(BaseModel):
+    """
+    Base model for user-related schemas.
+
+    VRM API isn't unfortunately very consistent with its API, so the child
+    classess with have to rename and override certain fields.
+    """
+
+    user_id: UserIdField
+    name: str
+    email: str
+    country: str | None = None
+    avatar_url: str | None = None

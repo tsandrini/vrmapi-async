@@ -1,21 +1,43 @@
 # --- vrmapi_async/models.py
 """Pydantic models for VRM API responses."""
+from enum import IntEnum
+from typing import List, Any, Dict
 
-from pydantic import Field, ConfigDict, field_validator, Json
-from typing import List, Optional, Any, Dict
+from pydantic import Field, field_validator, Json, HttpUrl
+from vrmapi_async.client.base.schema import (
+    BaseModel,
+    BaseResponseModel,
+    BaseUser,
+    UserIdField,
+)
 
-from vrmapi_async.client.base.schema import BaseModel, BaseResponseModel
+
+class AlarmMonitoringLevel(IntEnum):
+    none = 0
+    alarms = 1
+    alarms_and_warnings = 2
 
 
-class User(BaseModel):
-
+class User(BaseUser):
     # -- DEFINED BY DOCS --
-    user_id: int = Field(..., alias="id")
-    name: str
-    email: str
-    country: str
+    user_id: UserIdField
     # -- UNDOCUMENTED --
-    id_access_token: Optional[int] = Field(None, alias="idAccessToken")
+    access_token_id: int | None = Field(None, alias="idAccessToken")
+
+
+class InstallationTag(BaseModel):
+    # -- DEFINED BY DOCS --
+    tag_id: int = Field(alias="idTag")
+    name: str
+    automatic: bool
+    # -- UNDOCUMENTED --
+    source: str
+
+
+class InstallationImage(BaseModel):
+    site_image_id: int = Field(alias="idSiteImage")
+    image_name: str
+    url: HttpUrl
 
 
 class Site(BaseModel):
@@ -25,51 +47,45 @@ class Site(BaseModel):
     """
 
     # -- DEFINED BY DOCS --
-    id_site: int = Field(..., alias="idSite")
-    access_level: int = Field(..., alias="accessLevel")
+    site_id: int = Field(alias="idSite")
+    access_level: int
     owner: bool
     is_admin: bool
     name: str
     identifier: str
-    id_user: int = Field(..., alias="idUser")
-    pv_max: int = Field(..., alias="pvMax")
+    user_id: UserIdField
+    pv_max: int
     timezone: str
-    phonenumber: Optional[str] = None
-    notes: Optional[str] = None
-    geofence: Optional[Json[Any]] = None
-    geofence_enabled: bool = Field(..., alias="geofenceEnabled")
-    realtime_updates: bool = Field(..., alias="realtimeUpdates")
-    has_mains: bool = Field(..., alias="hasMains")
-    has_generator: bool = Field(..., alias="hasGenerator")
-    no_data_alarm_timeout: Optional[int] = Field(None, alias="noDataAlarmTimeout")
-    alarm_monitoring: int = Field(..., alias="alarmMonitoring")
+    phonenumber: str | None = None
+    notes: str | None = None
+    geofence: Json[Any] | None = None
+    geofence_enabled: bool
+    realtime_updates: bool
+    has_mains: bool
+    has_generator: bool
+    no_data_alarm_timeout: int | None = None
+    alarm_monitoring: AlarmMonitoringLevel
     invalid_vrm_auth_token_used_in_log_request: bool = Field(
-        ..., alias="invalidVRMAuthTokenUsedInLogRequest"
+        alias="invalidVRMAuthTokenUsedInLogRequest"
     )
     syscreated: int
     shared: bool
-    device_icon: Optional[str] = Field(None, alias="device_icon")
+    device_icon: str | None
     # -- UNDOCUMENTED --
-    is_paygo: Optional[bool] = Field(..., alias="isPaygo")
-    paygo_currency: Optional[str] = Field(None, alias="paygoCurrency")
-    paygo_total_amount: Optional[float] = Field(None, alias="paygoTotalAmount")
-    id_currency: Optional[int] = Field(None, alias="idCurrency")
-    currency_code: Optional[str] = Field(None, alias="currencyCode")
-    currency_sign: Optional[str] = Field(None, alias="currencySign")
-    currency_name: Optional[str] = Field(None, alias="currencyName")
-    inverter_charger_control: Optional[bool] = Field(
-        ..., alias="inverterChargerControl"
-    )
-
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    is_paygo: bool
+    paygo_currency: bool | None = None
+    paygo_total_amount: float | None = None
+    id_currency: int | None = None
+    currency_code: str | None = None
+    currency_sign: str | None = None
+    currency_name: str | None = None
+    inverter_charger_control: bool
 
     @field_validator("phonenumber", mode="before")
     @classmethod
-    def convert_phone_to_str(cls, v: Any) -> Optional[str]:
+    def convert_phone_to_str(cls, v: Any) -> str | None:
         """Converts integer or other phonenumbers to strings if not None."""
-        if v is None:
-            return None
-        return str(v)
+        None if v is None else str(v)
 
 
 class SiteExtended(Site):
@@ -78,22 +94,35 @@ class SiteExtended(Site):
     extra fields, capturing the 'extended' block.
     """
 
-    # tags: Optional[List[Dict[str, Any]]] = None
-    # extended: Optional[Dict[str, Any]] = None
-    # Add any other specific top-level fields from extended you want to model
-    # alarm: Optional[int] = None
-    alarm: Optional[bool] = None
-    last_timestamp: Optional[int] = None
-    current_time: Optional[str] = None
-    timezone_offset: Optional[int] = None
-    demo_mode: Optional[bool] = None
-    mqtt_webhost: Optional[str] = None
-    mqtt_host: Optional[str] = None
-    high_workload: Optional[bool] = None
-    current_alarms: Optional[List[dict]] = None
+    alarm: bool | None = None
+    last_timestamp: int | None = None
+    current_time: str | None = None
+    timezone_offset: int | None = None
+    demo_mode: bool
+    mqtt_webhost: str
+    mqtt_host: str
+    high_workload: bool
+    current_alarms: List[dict]
+    num_alarms: int
+    avatar_url: HttpUrl | None = None
+    gui_v: int | None = Field(None, alias="GUIv")
+    gui_hash: str | None = None
+    new_tags: bool
+    # no_data_alarm_timeout: Any
+    nodered_running: bool
+    prices_unavailable: bool | None = None
+    remote_console_choice: str | None = None  # TODO
+    view_permissions: Dict[str, bool]
+    tags: List[InstallationTag]
+    images: List[InstallationImage]
+    extended: List[dict]
 
-    # Allow extra fields for the extended model
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    @field_validator("tags", "images", mode="before")
+    @classmethod
+    def unify_list_or_bool_input(cls, v: List[dict] | bool) -> List[dict]:
+        if isinstance(v, bool):
+            return []
+        return v
 
 
 class UserSitesResponse(BaseResponseModel):
@@ -114,14 +143,14 @@ class AccessToken(BaseModel):
     """Model for an access token."""
 
     # -- DEFINED BY DOCS --
-    id_access_token: int = Field(..., alias="idAccessToken")  # NOTE: docs says str
+    access_token_id: int = Field(..., alias="idAccessToken")  # NOTE: docs says str
     name: str
-    created_on: int = Field(..., alias="createdOn")
+    created_on: int
     scope: str
-    expires: Optional[int] = None
+    expires: int | None = None
     # -- UNDOCUMENTED --
-    last_seen: Optional[int] = Field(None, alias="lastSeen")
-    last_successful_auth: Optional[int] = Field(None, alias="lastSuccessfulAuth")
+    last_seen: int | None = None
+    last_successful_auth: int | None = None
 
 
 class InstallationSearchResult(BaseModel):
@@ -129,7 +158,7 @@ class InstallationSearchResult(BaseModel):
     site_id: int
     site_identifier: str
     site_name: str
-    avatar_url: Optional[str] = None
+    avatar_url: HttpUrl | None = None
     highlight: Dict[str, List[str]]
 
 
@@ -144,7 +173,7 @@ class CreateAccessTokenResponse(BaseResponseModel):
 
     success: bool
     token: str
-    id_access_token: int = Field(..., alias="idAccessToken")  # NOTE: docs says str
+    access_token_id: int = Field(..., alias="idAccessToken")  # NOTE: docs says str
 
 
 class UsersListAccessTokensResponse(BaseResponseModel):

@@ -1,7 +1,7 @@
 from pydantic import Field, ConfigDict, model_validator
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, HttpUrl
 
-from vrmapi_async.client.base.schema import BaseModel, BaseResponseModel
+from vrmapi_async.client.base.schema import BaseModel, BaseResponseModel, BaseUser
 
 
 class StatsRecord(BaseModel):
@@ -65,3 +65,33 @@ class ConsumptionStatsResponse(BaseResponseModel):
     success: bool
     records: ConsumptionData
     totals: Dict[str, Any]
+
+
+class User(BaseUser):
+    """
+    Represents a VRM user.
+    This is a simplified model for the user data.
+    """
+
+    site_id: int = Field(..., alias="idSite")
+    access_level: int = Field(..., alias="accessLevel")
+    receives_alarm_notifications: bool = Field(..., alias="receivesAlarmNotifications")
+    avatar_url: HttpUrl | None = None
+
+
+class InvitedUser(User):
+    created: int | None = None
+
+
+class PendingUser(BaseModel):
+    pass
+
+
+class ListUsersResponse(BaseResponseModel):
+
+    success: bool
+    users: List[User]
+    invites: List[InvitedUser]
+    pending: List[PendingUser]
+    user_groups: List[Any] = Field(alias="userGroups")
+    site_gruops: List[Any] = Field(alias="siteGroups")
