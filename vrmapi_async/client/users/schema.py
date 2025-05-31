@@ -1,9 +1,9 @@
 # --- vrmapi_async/models.py
 """Pydantic models for VRM API responses."""
-from enum import IntEnum
-from typing import List, Any, Dict
+from enum import IntEnum, Enum
+from typing import List, Any, Dict, Annotated
 
-from pydantic import Field, field_validator, Json, HttpUrl
+from pydantic import Field, field_validator, Json
 from vrmapi_async.client.base.schema import (
     BaseModel,
     BaseResponseModel,
@@ -35,9 +35,86 @@ class InstallationTag(BaseModel):
 
 
 class InstallationImage(BaseModel):
+    # -- DEFINED BY DOCS --
     site_image_id: int = Field(alias="idSiteImage")
     image_name: str
-    url: HttpUrl
+    url: str
+
+
+class InstallationViewPermissions(BaseModel):
+    # -- DEFINED BY DOCS --
+    update_settings: bool
+    settings: bool
+    diagnostics: bool
+    share: bool
+    # vnc: bool # NOTE: this one is missing
+    mqtt_rpc: bool
+    vebus: bool
+    twoway: bool
+    exact_location: bool
+    nodered: bool
+    nodered_dash: bool
+    signalk: bool
+    # -- UNDOCUMENTED --
+    can_alter_installation: bool
+    can_see_group_and_team_members: bool
+    dess_config: bool
+    nodered_dash_v2: bool
+    paygo: bool
+    rc_classic: bool
+    rc_gui_v2: bool
+    readonly_realtime: bool
+
+
+InstanceRawValue = Annotated[str | int | float, Field()]
+
+
+class ExtendedAttributeInstance(BaseModel):
+    formatted_value: str
+    raw_value: InstanceRawValue | None = None
+    text_value: str | None = None
+    timestamp: int | None = None
+
+
+class ExtendedAttributeDataType(str, Enum):
+    string = "string"
+    float = "float"
+    enum = "enum"
+
+
+class InstallationExtendedAttribute(BaseModel):
+    """
+    Model for an extended installation attribute.
+
+    The main struggle of this model is that it can be nested and recursive,
+    that is, a parent attribute can have child attributes, which is why
+    every field is optional. Most of the attributes are required
+    in the end child nodes, but the parent nodes can have basically
+    all fields set to None.
+
+    You can practically test this with `len(attribute.data_attributes) > 0`,
+    and traverse from here.
+    """
+
+    # -- DEFINED BY DOCS --
+    data_attribute_id: int | None = Field(None, alias="idDataAttribute")
+    code: str | None = None
+    description: str | None = None
+    format_with_unit: str | None = None
+    data_type: ExtendedAttributeDataType | None = None  # TODO create an enum
+    text_value: str | None = None
+    instance: int | None = None  # DOCS says this is string, but it's actually an int
+    timestamp: int | None = None  # DOCS says string again
+    dbus_service_type: str | None = None
+    dbus_path: str | None = None
+    raw_value: InstanceRawValue | None = None
+    formatted_value: str | None = None
+    data_attribute_enum_values: List[Dict[str, InstanceRawValue | None]] = []
+    # -- UNDOCUMENTED --
+    device_type_id: int | None = Field(None, alias="idDeviceType")
+    instances: List[Any] | dict = []  # TODO this is broken for some reason
+    consists_of_attribute_codes: List[str] = []
+    data_attributes: List["InstallationExtendedAttribute"] = []
 
 
 class Site(BaseModel):
@@ -85,7 +162,7 @@ class Site(BaseModel):
     @classmethod
     def convert_phone_to_str(cls, v: Any) -> str | None:
         """Converts integer or other phonenumbers to strings if not None."""
-        None if v is None else str(v)
+        return None if v is None else str(v)
 
 
 class SiteExtended(Site):
@@ -94,28 +171,30 @@ class SiteExtended(Site):
     extra fields, capturing the 'extended' block.
     """
 
-    alarm: bool | None = None
-    last_timestamp: int | None = None
-    current_time: str | None = None
-    timezone_offset: int | None = None
+    # -- DEFINED BY DOCS --
+    alarm: bool
+    last_timestamp: int
+    current_time: str
+    timezone_offset: int
     demo_mode: bool
     mqtt_webhost: str
     mqtt_host: str
     high_workload: bool
-    current_alarms: List[dict]
+    current_alarms: List[dict]  # TODO
     num_alarms: int
-    avatar_url: HttpUrl | None = None
+    avatar_url: str | None = None
+    tags: List[InstallationTag]
+    images: List[InstallationImage]
+    view_permissions: InstallationViewPermissions
+    extended: List[InstallationExtendedAttribute]
+    # -- UNDOCUMENTED --
     gui_v: int | None = Field(None, alias="GUIv")
     gui_hash: str | None = None
     new_tags: bool
-    # no_data_alarm_timeout: Any
+    no_data_alarm_timeout: int | None = None
     nodered_running: bool
     prices_unavailable: bool | None = None
     remote_console_choice: str | None = None  # TODO
-    view_permissions: Dict[str, bool]
-    tags: List[InstallationTag]
-    images: List[InstallationImage]
-    extended: List[dict]
 
     @field_validator("tags", "images", mode="before")
     @classmethod
@@ -158,7 +237,7 @@ class InstallationSearchResult(BaseModel):
     site_id: int
     site_identifier: str
     site_name: str
-    avatar_url: HttpUrl | None = None
+    avatar_url: str | None = None
     highlight: Dict[str, List[str]]
 
 

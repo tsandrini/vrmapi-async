@@ -1,5 +1,5 @@
 from pydantic import Field, ConfigDict, model_validator
-from typing import List, Optional, Dict, Any, HttpUrl
+from typing import List, Optional, Dict, Any
 
 from vrmapi_async.client.base.schema import BaseModel, BaseResponseModel, BaseUser
 
@@ -76,7 +76,7 @@ class User(BaseUser):
     site_id: int = Field(..., alias="idSite")
     access_level: int = Field(..., alias="accessLevel")
     receives_alarm_notifications: bool = Field(..., alias="receivesAlarmNotifications")
-    avatar_url: HttpUrl | None = None
+    avatar_url: str | None = None
 
 
 class InvitedUser(User):

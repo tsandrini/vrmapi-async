@@ -1,4 +1,3 @@
-# --- vrmapi_async/client.py
 """Main asynchronous client for the Victron VRM API."""
 
 import logging
@@ -22,13 +21,13 @@ class VRMAsyncAPI:
 
     def __init__(
         self,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        username: str | None = None,
+        password: str | None = None,
         demo: bool = False,
-        token: Optional[str] = None,
-        user_id_for_token: Optional[int] = None,
+        token: str | None = None,
+        user_id_for_token: int | None = None,
         base_url: str = "https://vrmapi.victronenergy.com/v2",
-        headers: Optional[Dict[str, str]] = None,
+        headers: Dict[str, str] | None = None,
         routes_cls: Type[VRMRoutes] = VRMRoutes,
     ):
         """
@@ -226,9 +225,9 @@ class VRMAsyncAPI:
         self,
         method: str,
         url: str,
-        params: Optional[Dict] = None,
-        json_data: Optional[Dict] = None,
-        headers: Optional[Dict[str, str]] = None,
+        params: Dict | None = None,
+        json_data: Dict | None = None,
+        headers: Dict[str, str] | None = None,
     ) -> Dict[str, Any]:
         """
         Internal wrapper for making authenticated API requests with additional
