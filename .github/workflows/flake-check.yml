@@ -25,15 +25,14 @@ jobs:
       - name: "Checking out repository..."
         uses: actions/checkout@v4
 
-      - name: "Cleaning up the GitHub runner from default bloat..."
-        uses: wimpysworld/nothing-but-nix@main
+      # - name: "Cleaning up the GitHub runner from default bloat..."
+      #   uses: wimpysworld/nothing-but-nix@main
 
       - name: "Installing and configuring the nix package manager..."
         uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
             accept-flake-config = true
-            allow-import-from-derivation = true
 
       - name: "Settings up cachix binary cache..."
         uses: cachix/cachix-action@v16
