@@ -1,5 +1,5 @@
-from pydantic import Field, ConfigDict, model_validator
-from typing import List, Optional, Dict, Any
+from pydantic import Field, model_validator
+from typing import List, Dict, Any
 
 from vrmapi_async.client.base.schema import BaseModel, BaseResponseModel, BaseUser
 
@@ -35,12 +35,10 @@ class StatsRecord(BaseModel):
 class ConsumptionData(BaseModel):
     """Model for the 'records' part of consumption/kwh stats."""
 
-    pc: Optional[List[StatsRecord] | bool] = Field(None, alias="Pc")
-    bc: Optional[List[StatsRecord] | bool] = Field(None, alias="Bc")
-    gc: Any = Field(..., alias="Gc")
-    gc_lower: Any = Field(..., alias="gc")
-
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    pc: List[StatsRecord] | bool | None = Field(None, alias="Pc")
+    bc: List[StatsRecord] | bool | None = Field(None, alias="Bc")
+    gc: Any = Field(alias="Gc")
+    gc_lower: Any = Field(alias="gc")
 
     @model_validator(mode="before")
     @classmethod
@@ -73,9 +71,9 @@ class User(BaseUser):
     This is a simplified model for the user data.
     """
 
-    site_id: int = Field(..., alias="idSite")
-    access_level: int = Field(..., alias="accessLevel")
-    receives_alarm_notifications: bool = Field(..., alias="receivesAlarmNotifications")
+    site_id: int = Field(alias="idSite")
+    access_level: int
+    receives_alarm_notifications: bool
     avatar_url: str | None = None
 
 
@@ -91,7 +89,7 @@ class ListUsersResponse(BaseResponseModel):
 
     success: bool
     users: List[User]
-    invites: List[InvitedUser]
-    pending: List[PendingUser]
-    user_groups: List[Any] = Field(alias="userGroups")
-    site_gruops: List[Any] = Field(alias="siteGroups")
+    invites: List[InvitedUser] = []
+    pending: List[PendingUser] = []
+    user_groups: List[Any] = []
+    site_gruops: List[Any] = []

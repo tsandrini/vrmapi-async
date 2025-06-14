@@ -29,6 +29,7 @@ class VRMAsyncAPI:
         base_url: str = "https://vrmapi.victronenergy.com/v2",
         headers: Dict[str, str] | None = None,
         routes_cls: Type[VRMRoutes] = VRMRoutes,
+        httpx_client_kwargs: Dict[str, Any] = {},
     ):
         """
         Initialise the VRM API client. You can authenticate via 3 different methods
@@ -86,7 +87,9 @@ class VRMAsyncAPI:
         self.global_headers = {"Content-Type": "application/json"}
         self.routes = routes_cls()
 
-        self._client: httpx.AsyncClient = httpx.AsyncClient(base_url=base_url)
+        self._client: httpx.AsyncClient = httpx.AsyncClient(
+            base_url=base_url, **httpx_client_kwargs
+        )
 
         if headers:
             self.global_headers.update(headers)

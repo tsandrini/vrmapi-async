@@ -45,6 +45,11 @@ jobs:
       - name: "Entering developer environment..."
         uses: HatsuneMiku3939/direnv-action@v1
 
+      # TODO: figure out why nix-fast-build isn't being loaded via direnv
+      - name: "Setting up packages..."
+        run: |
+          nix profile install nixpkgs#nix-fast-build # parallel nix builder
+
       - name: "Building `.#checks` attribute..."
         run: nix-fast-build ${BUILD_OPTS} --flake '.#checks'
         # run: nix flake check --accept-flake-config
@@ -55,11 +60,11 @@ jobs:
       - name: "Building `.#devShells` attribute..."
         run: nix-fast-build ${BUILD_OPTS} --flake '.#devShells'
 
-      # - name: "Running `pytest` ..."
-      #   run: |
-      #     set -e
-      #     uv sync
-      #     pytest
+      - name: "Running `pytest`..."
+        run: |
+          set -e
+          uv sync --all-extras
+          pytest
 
       - name: "Checking flake inputs for stale & insecure nixpkgs versions..."
         uses: DeterminateSystems/flake-checker-action@main

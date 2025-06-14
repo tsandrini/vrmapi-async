@@ -180,13 +180,13 @@ class SiteExtended(Site):
     mqtt_webhost: str
     mqtt_host: str
     high_workload: bool
-    current_alarms: List[dict]  # TODO
+    current_alarms: List[dict] = []  # TODO
     num_alarms: int
     avatar_url: str | None = None
-    tags: List[InstallationTag]
-    images: List[InstallationImage]
+    tags: List[InstallationTag] = []
+    images: List[InstallationImage] = []
     view_permissions: InstallationViewPermissions
-    extended: List[InstallationExtendedAttribute]
+    extended: List[InstallationExtendedAttribute] = []
     # -- UNDOCUMENTED --
     gui_v: int | None = Field(None, alias="GUIv")
     gui_hash: str | None = None
@@ -208,14 +208,14 @@ class UserSitesResponse(BaseResponseModel):
     """Response model for fetching non-extended user sites."""
 
     success: bool
-    records: List[Site]
+    records: List[Site] = []
 
 
 class UserSitesExtendedResponse(BaseResponseModel):
     """Response model for fetching extended user sites."""
 
     success: bool
-    records: List[SiteExtended]
+    records: List[SiteExtended] = []
 
 
 class AccessToken(BaseModel):
@@ -259,7 +259,7 @@ class UsersListAccessTokensResponse(BaseResponseModel):
     """Response model for listing user access tokens."""
 
     success: bool
-    tokens: List[AccessToken]
+    tokens: List[AccessToken] = []
 
 
 # TODO: API returns a JSON returns object with a single key 'site_id' for this endpoint.

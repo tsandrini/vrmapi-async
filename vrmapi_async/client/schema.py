@@ -1,6 +1,4 @@
-from pydantic import Field
-
-from vrmapi_async.client.base.schema import BaseResponseModel
+from vrmapi_async.client.base.schema import BaseResponseModel, UserIdField
 
 
 class LoginResponse(BaseResponseModel):
@@ -8,7 +6,7 @@ class LoginResponse(BaseResponseModel):
 
     # -- DEFINED BY VRMAPI DOCS --
     token: str
-    user_id: int = Field(..., alias="idUser")
+    user_id: UserIdField
     verification_mode: str
     verification_sent: bool
     # -- UNDOCUMENTED --
@@ -20,7 +18,7 @@ class DemoLoginResponse(BaseResponseModel):
 
     # -- DEFINED BY VRMAPI DOCS --
     token: str
-    user_id: int = Field(..., alias="idUser")
+    user_id: UserIdField
     verification_mode: str | None = None
     verification_sent: bool | None = None
     # -- UNDOCUMENTED --
