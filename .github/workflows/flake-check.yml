@@ -60,11 +60,12 @@ jobs:
       - name: "Building `.#devShells` attribute..."
         run: nix-fast-build ${BUILD_OPTS} --flake '.#devShells'
 
-      - name: "Running `pytest`..."
+      - name: "Running `pytest` + `mypy vrmapi_async`..."
         run: |
           set -e
           uv sync --all-extras
           pytest
+          mypy vrmapi_async
 
       - name: "Checking flake inputs for stale & insecure nixpkgs versions..."
         uses: DeterminateSystems/flake-checker-action@main

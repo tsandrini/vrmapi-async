@@ -43,26 +43,16 @@
 
             ruff = {
               enable = true;
-              name = "check with ruff";
-              entry = "uv run ruff";
-              language = "system";
-              pass_filenames = false;
-              always_run = true;
-              args = [
-                "check"
-                "vrmapi_async"
-                "tests"
-                "--fix"
-              ];
               types = [ "python" ];
             };
 
+            # TODO: We need to wrap the mypy executable with the vrmapi_async
+            # virtual environemnt, otherwise it can't check anything.
             mypy = {
-              enable = true;
+              enable = false;
               types = [ "python" ];
               pass_filenames = false;
               args = [ "vrmapi_async" ];
-              entry = "uv run mypy";
             };
           };
         };
