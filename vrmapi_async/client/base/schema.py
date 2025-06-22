@@ -45,7 +45,7 @@ class BaseUser(BaseModel):
     Base model for user-related schemas.
 
     VRM API isn't unfortunately very consistent with its API, so the child
-    classess with have to rename and override certain fields.
+    classes with have to rename and override certain fields.
     """
 
     user_id: UserIdField

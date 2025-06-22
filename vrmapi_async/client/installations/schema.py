@@ -92,4 +92,4 @@ class ListUsersResponse(BaseResponseModel):
     invites: List[InvitedUser] = []
     pending: List[PendingUser] = []
     user_groups: List[Any] = []
-    site_gruops: List[Any] = []
+    site_groups: List[Any] = []
