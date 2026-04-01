@@ -258,8 +258,8 @@ class VRMAsyncAPI:
         self,
         method: str,
         url: str,
-        params: dict | None = None,
-        json_data: dict | None = None,
+        params: dict[str, Any] | None = None,
+        json_data: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Make an authenticated API request with error handling.

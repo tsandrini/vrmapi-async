@@ -39,7 +39,6 @@ test = [
 ]
 dev = [
     "ruff>=0.4.0",
-    "mypy>=1.10.0",
     "vrmapi-async[test]",
 ]
 
@@ -58,6 +57,28 @@ dev = [
 # markers = [
 #     "online: marks tests as online (require network and hit the real VRM demo API)",
 # ]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+allow_subclassing_any = true
+allow_untyped_calls = true
+pretty = true
+show_error_codes = true
+implicit_reexport = true
+allow_untyped_decorators = true
+warn_unused_ignores = true
+warn_return_any = false
+namespace_packages = true
+disallow_any_explicit = false
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+warn_unreachable = false
 
 [tool.ruff]
 # List of enabled rulsets.

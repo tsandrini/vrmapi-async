@@ -72,12 +72,17 @@
           # TODO: We need to wrap the mypy executable with the vrmapi_async
           # virtual environment, otherwise it can't check anything.
           mypy = {
-            enable = false;
+            enable = true;
             types = [ "python" ];
             pass_filenames = false;
-            args = [ "vrmapi_async" ];
+            settings.binPath = "${preCommitPyEnv}/bin/mypy";
+            args = [
+              "vrmapi_async"
+              "tests"
+            ];
           };
         };
+
       };
     };
 }

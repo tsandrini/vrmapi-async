@@ -40,7 +40,7 @@ class BaseResponseModel(BaseTemplateModel):
     undocumented or unexpected fields that Pydantic would otherwise drop.
     """
 
-    _raw: dict = PrivateAttr(default_factory=dict)
+    _raw: dict[str, Any] = PrivateAttr(default_factory=dict)
 
     def __init__(self, **data: Any) -> None:
         """Initialize and capture raw response data."""

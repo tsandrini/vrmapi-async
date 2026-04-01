@@ -133,7 +133,7 @@ class InstallationExtendedAttribute(BaseModel):
     # -- UNDOCUMENTED --
     device_type_id: int | None = Field(None, alias="idDeviceType")
     # TODO(tsandrini): instances field is broken for some reason
-    instances: list[Any] | dict = []
+    instances: list[Any] | dict[str, Any] = []
     consists_of_attribute_codes: list[str] = []
     data_attributes: list["InstallationExtendedAttribute"] = []
 
@@ -203,7 +203,7 @@ class SiteExtended(Site):
     mqtt_host: str
     high_workload: bool
     # TODO(tsandrini): type current_alarms properly
-    current_alarms: list[dict] = []
+    current_alarms: list[dict[str, Any]] = []
     num_alarms: int
     avatar_url: str | None = None
     tags: list[InstallationTag] = []
@@ -222,7 +222,9 @@ class SiteExtended(Site):
 
     @field_validator("tags", "images", mode="before")
     @classmethod
-    def unify_list_or_bool_input(cls, v: list[dict] | bool) -> list[dict]:
+    def unify_list_or_bool_input(
+        cls, v: list[dict[str, Any]] | bool
+    ) -> list[dict[str, Any]]:
         """Convert ``false`` to empty list for tags/images fields."""
         if isinstance(v, bool):
             return []
