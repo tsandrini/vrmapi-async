@@ -1,5 +1,7 @@
 """Tests for UsersNamespace — all mocked via respx."""
 
+import json
+
 import httpx
 import pytest
 import respx
@@ -289,6 +291,20 @@ class TestGetSiteIdByIdentifier:
         assert isinstance(resp, SiteIdByIdentifierResponse)
         assert resp.records.site_id == 1001
 
+    async def test_sends_json_body(self, mock_api):
+        """Verify identifier is sent in JSON body, not query params."""
+        payload = {"success": True, "records": {"siteId": 1001}}
+        respx.post(f"{BASE}/users/{USER_ID}/get-site-id").mock(
+            return_value=httpx.Response(200, json=payload)
+        )
+        await mock_api.connect()
+        await mock_api.users.get_site_id_by_identifier(USER_ID, "abc123")
+
+        request = respx.calls.last.request
+        body = json.loads(request.content)
+        assert body["installation_identifier"] == "abc123"
+        assert "installation_identifier=" not in str(request.url)
+
 
 # ---------------------------------------------------------------------------
 # create_installation
@@ -306,6 +322,20 @@ class TestCreateInstallation:
 
         assert isinstance(resp, CreateInstallationResponse)
         assert resp.records.site_id == 2002
+
+    async def test_sends_json_body(self, mock_api):
+        """Verify identifier is sent in JSON body, not query params."""
+        payload = {"success": True, "records": {"siteId": 2002}}
+        respx.post(f"{BASE}/users/{USER_ID}/addsite").mock(
+            return_value=httpx.Response(200, json=payload)
+        )
+        await mock_api.connect()
+        await mock_api.users.create_installation(USER_ID, "new-ident")
+
+        request = respx.calls.last.request
+        body = json.loads(request.content)
+        assert body["installation_identifier"] == "new-ident"
+        assert "installation_identifier=" not in str(request.url)
 
 
 # ---------------------------------------------------------------------------
@@ -357,7 +387,22 @@ class TestCreateAccessToken:
         assert resp.token == "new-token-value"
         assert resp.access_token_id == 100
 
+    async def test_sends_json_body(self, mock_api):
+        """Verify name is sent in JSON body, not query params."""
+        payload = {"success": True, "token": "t", "idAccessToken": 101}
+        respx.post(f"{BASE}/users/{USER_ID}/accesstokens/create").mock(
+            return_value=httpx.Response(200, json=payload)
+        )
+        await mock_api.connect()
+        await mock_api.users.create_access_token(USER_ID, "my-new-token")
+
+        request = respx.calls.last.request
+        body = json.loads(request.content)
+        assert body["name"] == "my-new-token"
+        assert "name=" not in str(request.url)
+
     async def test_datetime_expiry_converted(self, mock_api):
+        """Verify datetime expiry is converted to epoch in JSON body."""
         from datetime import datetime, timezone
 
         payload = {"success": True, "token": "t", "idAccessToken": 101}
@@ -369,7 +414,8 @@ class TestCreateAccessToken:
         await mock_api.users.create_access_token(USER_ID, "expiring", expiry=dt)
 
         request = respx.calls.last.request
-        assert "expiry=1748736000" in str(request.url)
+        body = json.loads(request.content)
+        assert body["expiry"] == 1748736000
 
 
 # ---------------------------------------------------------------------------

@@ -40,8 +40,8 @@ class UsersNamespace(BaseNamespace):
         """Create a new installation for the user (UNTESTED)."""
         logger.warning("TODO: UNTESTED")
         url = self.routes.USERS_INSTALLATIONS_CREATE.format(user_id=user_id)
-        params = {"installation_identifier": identifier}
-        response_data = await self._request("POST", url, params=params)
+        json_data = {"installation_identifier": identifier}
+        response_data = await self._request("POST", url, json_data=json_data)
         return CreateInstallationResponse(**response_data)
 
     async def search_installations_by_query(
@@ -71,8 +71,8 @@ class UsersNamespace(BaseNamespace):
         :returns: SiteIdByIdentifierResponse containing the SiteId.
         """
         url = self.routes.USERS_INSTALLATIONS_ID_BY_IDENTIFIER.format(user_id=user_id)
-        params = {"installation_identifier": identifier}
-        response_data = await self._request("POST", url, params=params)
+        json_data = {"installation_identifier": identifier}
+        response_data = await self._request("POST", url, json_data=json_data)
         return SiteIdByIdentifierResponse(**response_data)
 
     async def list_installations(self, user_id: int) -> UserSitesResponse:
@@ -116,25 +116,19 @@ class UsersNamespace(BaseNamespace):
     ) -> CreateAccessTokenResponse:
         """Create a new access token for the user.
 
-        WARNING: This is currently broken on the VRM API side.
-
         :param user_id: User ID to create an access token for.
         :param name: Name for the new access token.
         :param expiry: Optional expiry (epoch int or datetime).
         :returns: CreateAccessTokenResponse with the created token.
         """
-        logger.warning(
-            "The `create_access_token` endpoint seems to be "
-            "currently broken in the VRM API."
-        )
         url = self.routes.USERS_ACCESSTOKENS_CREATE.format(user_id=user_id)
-        params: dict[str, Any] = {"name": name}
+        json_data: dict[str, Any] = {"name": name}
         if expiry:
-            params["expiry"] = (
+            json_data["expiry"] = (
                 datetime_to_epoch(expiry) if isinstance(expiry, datetime) else expiry
             )
 
-        response_data = await self._request("POST", url, params=params)
+        response_data = await self._request("POST", url, json_data=json_data)
         return CreateAccessTokenResponse(**response_data)
 
     async def revoke_access_token(
