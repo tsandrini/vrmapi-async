@@ -1,39 +1,40 @@
+"""Base Pydantic models for VRM API schemas."""
+
 from typing import Annotated, Any
 
+from pydantic import AliasChoices, ConfigDict, Field, PrivateAttr
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import ConfigDict, AliasChoices, Field, PrivateAttr
+
 from vrmapi_async.utils import snake_case_to_camel_case
 
 UserIdField = Annotated[
-    int, Field(validation_alias=AliasChoices("user_id", "id_user", "idUser", "userId"))
+    int,
+    Field(validation_alias=AliasChoices("user_id", "id_user", "idUser", "userId")),
 ]
 
 
 class BaseTemplateModel(PydanticBaseModel):
-    """
-    Base model for all VRM API schemas.
+    """Base model for all VRM API schemas.
+
     Mainly used to override global configuration settings.
     """
 
     model_config = ConfigDict(
-        alias_generator=lambda field_name: snake_case_to_camel_case(field_name),
+        alias_generator=snake_case_to_camel_case,
         extra="ignore",
         validate_by_name=True,
     )
 
 
 class BaseModel(BaseTemplateModel):
-    """
-    Base model for all VRM API schemas.
+    """Base model for all VRM API schemas.
+
     Inherits from BaseTemplateModel to apply global configuration.
     """
 
-    pass
-
 
 class BaseResponseModel(BaseTemplateModel):
-    """
-    Base model for all VRM API response schemas.
+    """Base model for all VRM API response schemas.
 
     Captures the raw response dict in ``_raw`` so callers can access
     undocumented or unexpected fields that Pydantic would otherwise drop.
@@ -42,13 +43,13 @@ class BaseResponseModel(BaseTemplateModel):
     _raw: dict = PrivateAttr(default_factory=dict)
 
     def __init__(self, **data: Any) -> None:
+        """Initialize and capture raw response data."""
         super().__init__(**data)
         self._raw = data
 
 
 class BaseUser(BaseModel):
-    """
-    Base model for user-related schemas.
+    """Base model for user-related schemas.
 
     VRM API isn't unfortunately very consistent with its API, so the child
     classes with have to rename and override certain fields.

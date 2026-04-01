@@ -1,17 +1,12 @@
-# --- vrmapi_async/exceptions.py
 """Custom exceptions for the VRM API client."""
 
 
 class VRMAPIError(Exception):
     """Base exception class for VRM API errors."""
 
-    pass
-
 
 class VRMAuthenticationError(VRMAPIError):
     """Raised when authentication fails."""
-
-    pass
 
 
 class VRMAPIRequestError(VRMAPIError):
@@ -22,12 +17,14 @@ class VRMAPIRequestError(VRMAPIError):
         message: str,
         status_code: int | None = None,
         response_text: str | None = None,
-    ):
+    ) -> None:
+        """Initialize with message, optional status code and response text."""
         super().__init__(message)
         self.status_code = status_code
         self.response_text = response_text
 
     def __str__(self) -> str:
+        """Return a formatted error string with status code and response."""
         parts = [super().__str__()]
         if self.status_code:
             parts.append(f"Status Code: {self.status_code}")

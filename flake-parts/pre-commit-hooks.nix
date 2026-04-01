@@ -3,64 +3,81 @@
 {
   imports = [ inputs.pre-commit-hooks.flakeModule ];
 
-  perSystem = _: {
-    pre-commit.settings = {
-      excludes = [
-        "flake.lock" # NOTE: prettier thinks this is json >.< prettier baka!!!
-      ];
+  perSystem =
+    { pkgs, ... }:
+    let
+      preCommitPyEnv = pkgs.python312.withPackages (
+        p: with p; [
+          mypy
+          ruff
+          isort
+        ]
+      );
+    in
+    {
+      pre-commit.settings = {
+        excludes = [
+          "flake.lock" # NOTE: prettier thinks this is json >.< prettier baka!!!
+        ];
 
-      hooks = {
-        # --- Nix ---
-        deadnix.enable = true; # Find and remove unused code in .nix source files
-        nil.enable = true; # Nix Language server, an incremental analysis assistant for writing in Nix.
-        nixfmt.enable = true; # An opinionated formatter for Nix
-        statix.enable = true; # Lints and suggestions for the nix programming language
+        hooks = {
+          # --- Nix ---
+          deadnix.enable = true; # Find and remove unused code in .nix source files
+          nil.enable = true; # Nix Language server, an incremental analysis assistant for writing in Nix.
+          nixfmt.enable = true; # An opinionated formatter for Nix
+          statix.enable = true; # Lints and suggestions for the nix programming language
 
-        # --- Shell ---
-        shellcheck.enable = true; # Shell script analysis tool
-        shfmt.enable = true; # Shell parser and formatter
+          # --- Shell ---
+          shellcheck.enable = true; # Shell script analysis tool
+          shfmt.enable = true; # Shell parser and formatter
 
-        # --- Misc ---
-        markdownlint.enable = true; # Markdown lint tool
-        editorconfig-checker.enable = true; # .editorconfig file checker
-        typos.enable = true; # Source code spell checker
-        check-json.enable = true;
-        check-toml.enable = true;
-        # jsonfmt.enable = true; # Formatter for JSON files
+          # --- Misc ---
+          markdownlint.enable = true; # Markdown lint tool
+          editorconfig-checker.enable = true; # .editorconfig file checker
+          typos.enable = true; # Source code spell checker
+          check-json.enable = true;
+          check-toml.enable = true;
+          # jsonfmt.enable = true; # Formatter for JSON files
 
-        # --- fs utils ---
-        check-symlinks.enable = true; # Check for broken symlinks
-        check-added-large-files.enable = true;
-        check-executables-have-shebangs.enable = true;
-        check-shebang-scripts-are-executable.enable = true;
-        end-of-file-fixer.enable = true;
-        mixed-line-endings.enable = true;
-        trim-trailing-whitespace.enable = true;
+          # --- fs utils ---
+          check-symlinks.enable = true; # Check for broken symlinks
+          check-added-large-files.enable = true;
+          check-executables-have-shebangs.enable = true;
+          check-shebang-scripts-are-executable.enable = true;
+          end-of-file-fixer.enable = true;
+          mixed-line-endings.enable = true;
+          trim-trailing-whitespace.enable = true;
 
-        # --- VCS ---
-        # actionlint.enable = true; # GitHub workflows linting
-        commitizen.enable = true; # Commitizen is release management tool designed for teams.
-        ripsecrets.enable = true; # A tool to prevent committing secret keys into your source code
+          # --- VCS ---
+          # actionlint.enable = true; # GitHub workflows linting
+          commitizen.enable = true; # Commitizen is release management tool designed for teams.
+          ripsecrets.enable = true; # A tool to prevent committing secret keys into your source code
 
-        # --- Python ---
-        pyupgrade.enable = true; # A tool to automatically upgrade syntax for newer versions of the language.
-        # name-tests-test.enable = true;
-        check-docstring-first.enable = true;
-        # name-tests-test.enable = true;
-        # check-builtin-literals.enable = true;
-        # isort.enable = true; # isort your imports, so you don't have to.
-        ruff.enable = true;
-        ruff-format.enable = true;
+          # --- Python ---
+          pyupgrade.enable = true; # A tool to automatically upgrade syntax for newer versions of the language.
+          # name-tests-test.enable = true;
+          check-docstring-first.enable = true;
+          # name-tests-test.enable = true;
+          # check-builtin-literals.enable = true;
+          # isort.enable = true; # isort your imports, so you don't have to.
+          ruff = {
+            enable = true;
+            entry = "${preCommitPyEnv}/bin/ruff check --fix";
+          };
+          ruff-format = {
+            enable = true;
+            entry = "${preCommitPyEnv}/bin/ruff format";
+          };
 
-        # TODO: We need to wrap the mypy executable with the vrmapi_async
-        # virtual environment, otherwise it can't check anything.
-        mypy = {
-          enable = false;
-          types = [ "python" ];
-          pass_filenames = false;
-          args = [ "vrmapi_async" ];
+          # TODO: We need to wrap the mypy executable with the vrmapi_async
+          # virtual environment, otherwise it can't check anything.
+          mypy = {
+            enable = false;
+            types = [ "python" ];
+            pass_filenames = false;
+            args = [ "vrmapi_async" ];
+          };
         };
       };
     };
-  };
 }

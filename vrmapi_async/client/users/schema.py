@@ -1,10 +1,10 @@
-# --- vrmapi_async/models.py
-"""Pydantic models for VRM API responses."""
+"""Pydantic models for user-related VRM API responses."""
 
-from enum import IntEnum, Enum
-from typing import List, Any, Dict, Annotated
+from enum import Enum, IntEnum
+from typing import Annotated, Any
 
-from pydantic import ConfigDict, Field, field_validator, Json, AliasChoices
+from pydantic import AliasChoices, ConfigDict, Field, Json, field_validator
+
 from vrmapi_async.client.base.schema import (
     BaseModel,
     BaseResponseModel,
@@ -14,12 +14,16 @@ from vrmapi_async.client.base.schema import (
 
 
 class AlarmMonitoringLevel(IntEnum):
+    """Alarm monitoring sensitivity levels."""
+
     none = 0
     alarms = 1
     alarms_and_warnings = 2
 
 
 class User(BaseUser):
+    """VRM user with optional access token reference."""
+
     # -- DEFINED BY DOCS --
     user_id: int = Field(validation_alias=AliasChoices("id", "user_id"))
     # -- UNDOCUMENTED --
@@ -27,6 +31,8 @@ class User(BaseUser):
 
 
 class InstallationTag(BaseModel):
+    """Tag associated with a VRM installation."""
+
     # -- DEFINED BY DOCS --
     tag_id: int = Field(alias="idTag")
     name: str
@@ -36,6 +42,8 @@ class InstallationTag(BaseModel):
 
 
 class InstallationImage(BaseModel):
+    """Image associated with a VRM installation."""
+
     # -- DEFINED BY DOCS --
     site_image_id: int = Field(alias="idSiteImage")
     image_name: str
@@ -43,6 +51,8 @@ class InstallationImage(BaseModel):
 
 
 class InstallationViewPermissions(BaseModel):
+    """View permissions for a VRM installation."""
+
     # -- DEFINED BY DOCS --
     update_settings: bool
     settings: bool
@@ -71,6 +81,8 @@ InstanceRawValue = Annotated[str | int | float, Field()]
 
 
 class ExtendedAttributeInstance(BaseModel):
+    """Single instance of an extended attribute value."""
+
     formatted_value: str
     raw_value: InstanceRawValue | None = None
     text_value: str | None = None
@@ -78,14 +90,15 @@ class ExtendedAttributeInstance(BaseModel):
 
 
 class ExtendedAttributeDataType(str, Enum):
+    """Data types for extended installation attributes."""
+
     string = "string"
     float = "float"
     enum = "enum"
 
 
 class InstallationExtendedAttribute(BaseModel):
-    """
-    Model for an extended installation attribute.
+    """Model for an extended installation attribute.
 
     Uses ``extra="allow"`` because the VRM API returns unpredictable and
     undocumented fields here, and the recursive/nested structure makes
@@ -97,7 +110,7 @@ class InstallationExtendedAttribute(BaseModel):
     in the end child nodes, but the parent nodes can have basically
     all fields set to None.
 
-    You can practically test this with `len(attribute.data_attributes) > 0`,
+    You can practically test this with ``len(attribute.data_attributes) > 0``,
     and traverse from here.
     """
 
@@ -108,25 +121,26 @@ class InstallationExtendedAttribute(BaseModel):
     code: str | None = None
     description: str | None = None
     format_with_unit: str | None = None
-    data_type: ExtendedAttributeDataType | None = None  # TODO create an enum
+    data_type: ExtendedAttributeDataType | None = None
     text_value: str | None = None
-    instance: int | None = None  # DOCS says this is string, but it's actually an int
-    timestamp: int | None = None  # DOCS says string again
+    instance: int | None = None
+    timestamp: int | None = None
     dbus_service_type: str | None = None
     dbus_path: str | None = None
     raw_value: InstanceRawValue | None = None
     formatted_value: str | None = None
-    data_attribute_enum_values: List[Dict[str, InstanceRawValue | None]] = []
+    data_attribute_enum_values: list[dict[str, InstanceRawValue | None]] = []
     # -- UNDOCUMENTED --
     device_type_id: int | None = Field(None, alias="idDeviceType")
-    instances: List[Any] | dict = []  # TODO this is broken for some reason
-    consists_of_attribute_codes: List[str] = []
-    data_attributes: List["InstallationExtendedAttribute"] = []
+    # TODO(tsandrini): instances field is broken for some reason
+    instances: list[Any] | dict = []
+    consists_of_attribute_codes: list[str] = []
+    data_attributes: list["InstallationExtendedAttribute"] = []
 
 
 class Site(BaseModel):
-    """
-    Model for a VRM Site (Non-Extended).
+    """Model for a VRM Site (Non-Extended).
+
     Strictly defines fields expected in the non-extended response.
     """
 
@@ -168,14 +182,15 @@ class Site(BaseModel):
     @field_validator("phonenumber", mode="before")
     @classmethod
     def convert_phone_to_str(cls, v: Any) -> str | None:
-        """Converts integer or other phonenumbers to strings if not None."""
+        """Convert integer or other phone numbers to strings."""
         return None if v is None else str(v)
 
 
 class SiteExtended(Site):
-    """
-    Model for an Extended VRM Site. Inherits from Site and allows
-    extra fields, capturing the 'extended' block.
+    """Model for an Extended VRM Site.
+
+    Inherits from Site and allows extra fields,
+    capturing the 'extended' block.
     """
 
     # -- DEFINED BY DOCS --
@@ -187,13 +202,14 @@ class SiteExtended(Site):
     mqtt_webhost: str
     mqtt_host: str
     high_workload: bool
-    current_alarms: List[dict] = []  # TODO
+    # TODO(tsandrini): type current_alarms properly
+    current_alarms: list[dict] = []
     num_alarms: int
     avatar_url: str | None = None
-    tags: List[InstallationTag] = []
-    images: List[InstallationImage] = []
+    tags: list[InstallationTag] = []
+    images: list[InstallationImage] = []
     view_permissions: InstallationViewPermissions
-    extended: List[InstallationExtendedAttribute] = []
+    extended: list[InstallationExtendedAttribute] = []
     # -- UNDOCUMENTED --
     gui_v: int | None = Field(None, alias="GUIv")
     gui_hash: str | None = None
@@ -201,11 +217,13 @@ class SiteExtended(Site):
     no_data_alarm_timeout: int | None = None
     nodered_running: bool
     prices_unavailable: bool | None = None
-    remote_console_choice: str | None = None  # TODO
+    # TODO(tsandrini): type remote_console_choice properly
+    remote_console_choice: str | None = None
 
     @field_validator("tags", "images", mode="before")
     @classmethod
-    def unify_list_or_bool_input(cls, v: List[dict] | bool) -> List[dict]:
+    def unify_list_or_bool_input(cls, v: list[dict] | bool) -> list[dict]:
+        """Convert ``false`` to empty list for tags/images fields."""
         if isinstance(v, bool):
             return []
         return v
@@ -215,14 +233,14 @@ class UserSitesResponse(BaseResponseModel):
     """Response model for fetching non-extended user sites."""
 
     success: bool
-    records: List[Site] = []
+    records: list[Site] = []
 
 
 class UserSitesExtendedResponse(BaseResponseModel):
     """Response model for fetching extended user sites."""
 
     success: bool
-    records: List[SiteExtended] = []
+    records: list[SiteExtended] = []
 
 
 class AccessToken(BaseModel):
@@ -240,18 +258,23 @@ class AccessToken(BaseModel):
 
 
 class InstallationSearchResult(BaseModel):
-    # NOTE: Docs say that all of these fields are optional, they don't seem to be
+    """Single result from an installation search query."""
+
+    # NOTE: Docs say that all of these fields are optional,
+    # they don't seem to be
     site_id: int
     site_identifier: str
     site_name: str
     avatar_url: str | None = None
-    highlight: Dict[str, List[str]]
+    highlight: dict[str, list[str]]
 
 
 class InstallationSearchResponse(BaseResponseModel):
+    """Response model for installation search results."""
+
     success: bool
     count: int
-    results: List[InstallationSearchResult]
+    results: list[InstallationSearchResult]
 
 
 class CreateAccessTokenResponse(BaseResponseModel):
@@ -266,23 +289,27 @@ class UsersListAccessTokensResponse(BaseResponseModel):
     """Response model for listing user access tokens."""
 
     success: bool
-    tokens: List[AccessToken] = []
+    tokens: list[AccessToken] = []
 
 
-# TODO: API returns a JSON returns object with a single key 'site_id' for this endpoint.
-#       But this is also the most flexible way in case they add additional stuff
-#       into the records object in the future.
+# TODO(tsandrini): API returns a JSON object with a single key
+# 'site_id' for this endpoint, but this is also the most flexible
+# way in case they add additional stuff into the records object.
 class SiteId(BaseModel):
+    """Model for a site ID reference."""
+
     site_id: int
 
 
 class RevokeAccessTokenData(BaseModel):
+    """Data payload for an access token revocation response."""
+
     removed: int
 
 
 class SiteIdByIdentifierResponse(BaseResponseModel):
-    """
-    Response model for getting a site ID by installation identifier.
+    """Response model for getting a site ID by installation identifier.
+
     Mainly used for the records.site_id field.
     """
 
@@ -291,8 +318,8 @@ class SiteIdByIdentifierResponse(BaseResponseModel):
 
 
 class CreateInstallationResponse(BaseResponseModel):
-    """
-    Response model for creating a new installation.
+    """Response model for creating a new installation.
+
     Contains the created Site object.
     """
 
@@ -301,9 +328,9 @@ class CreateInstallationResponse(BaseResponseModel):
 
 
 class AboutMeResponse(BaseResponseModel):
-    """
-    Response model for the 'about me' endpoint that returns information
-    about the currently authenticated user.
+    """Response model for the 'about me' endpoint.
+
+    Returns information about the currently authenticated user.
     """
 
     success: bool
@@ -311,8 +338,8 @@ class AboutMeResponse(BaseResponseModel):
 
 
 class RevokeAccessTokenResponse(BaseResponseModel):
-    """
-    Response model for revoking an access token.
+    """Response model for revoking an access token.
+
     Contains the ID of the revoked access token.
     """
 

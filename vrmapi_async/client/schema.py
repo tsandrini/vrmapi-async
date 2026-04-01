@@ -1,3 +1,5 @@
+"""Login response models for VRM API."""
+
 from vrmapi_async.client.base.schema import BaseResponseModel, UserIdField
 
 

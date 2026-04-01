@@ -1,17 +1,17 @@
 import pytest
 from httpx import Timeout
 
+from vrmapi_async.client import VRMAsyncAPI
+from vrmapi_async.client.users.schema import AboutMeResponse, User
 from vrmapi_async.exceptions import VRMAuthenticationError
 from vrmapi_async.routes import VRMRoutes
-from vrmapi_async.client import VRMAsyncAPI
 
 pytestmark = pytest.mark.asyncio
 
 
 class TestClientOnlineViaDemoAuthNamespace:
-
     async def test_no_auth_method_raises_error(self):
-        """Tests that the client fails when no authentication method is provided"""
+        """Tests that the client fails when no authentication method is provided."""
         with pytest.raises(ValueError):
             VRMAsyncAPI()
 
@@ -140,3 +140,29 @@ class TestClientOnlineViaDemoAuthNamespace:
 #         assert stats.records is not None
 #         # We can't guarantee 'Pc' will exist, but we can check the structure
 #         assert hasattr(stats.records, "pc") or hasattr(stats.records, "bc")
+
+
+class TestClientOnlineViaDemoUsersNamespace:
+    async def test_demo_about_me(self):
+        client = VRMAsyncAPI(demo=True)
+        await client.connect()
+        response = await client.users.about_me()
+        assert isinstance(response, AboutMeResponse)
+        assert response.success is True
+        assert isinstance(response.user, User)
+
+    # NOTE: demo user doesn't have sufficient permissions for this action
+    # async def test_demo_create_installation(self):
+    #     client = VRMAsyncAPI(demo=True)
+    #     await client.connect()
+    #     response = await client.users.create_installation(
+    #         user_id=client.user_id,
+    #         identifier="test-installation",
+    #     )
+    #     assert isinstance(response, CreateInstallationResponse)
+    #     assert response.success is True
+    #
+
+
+class TestClientOnlineViaDemoInstallationsNamespace:
+    pass

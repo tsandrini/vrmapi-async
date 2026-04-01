@@ -58,3 +58,84 @@ dev = [
 # markers = [
 #     "online: marks tests as online (require network and hit the real VRM demo API)",
 # ]
+
+[tool.ruff]
+# List of enabled rulsets.
+# See https://docs.astral.sh/ruff/rules/ for more information.
+lint.select = [
+    "A",   # Prevent builtins shadowing
+    "E",   # Error
+    "F",   # Pyflakes
+    "W",   # Pycodestyle
+    "C90", # McCabe complexity
+    "I",   # Isort
+    "N",   # pep8-naming
+    "D",   # Pydocstyle
+    "ANN", # Pytype annotations
+    "S",   # Bandit
+    "B",   # Bugbear
+    "COM", # Commas
+    "C4",  # Comprehensions
+    "ISC", # Implicit string concat
+    "PIE", # Unnecessary code
+    "T20", # Catch prints
+    "PYI", # validate pyi files
+    "Q",   # Checks for quotes
+    "RSE", # Checks raise statements
+    "RET", # Checks return statements
+    "SLF", # Self checks
+    "SIM", # Simplificator
+    "PTH", # Pathlib checks
+    "ERA", # Checks for commented out code
+    "PL",  # PyLint checks
+    "RUF", # Specific to Ruff checks
+    "ICN", # Import conventions
+    "DTZ", # Datetime zone
+    "LOG", # Logging
+    "G",   # Logging format
+    "TID", # Tidy imports
+    "TD",  # todos formatting
+    "ARG", # Unused arguments
+    "UP",  # Pyupgrade
+    "BLE", # Do not catch blind exceptions
+]
+lint.ignore = [
+    "ERA001",  # Commented out code
+    "PLR0913", # Too many arguments for function call
+    "TD003",   # Missing issue link for this TODO
+    "COM812",  # Trailing comma missing — conflicts with ruff-format
+    "ANN401",  # typing.Any disallowed — needed for Pydantic validators/response models
+    "RUF012",  # Mutable ClassVar — false positive on Pydantic field declarations
+]
+lint.mccabe = { max-complexity = 10 }
+exclude = [
+    ".venv/",
+]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "S101",   # Use of assert detected
+    "S106",   # Possible hardcoded password (test fixtures)
+    "ARG001", # Unused function argument (pytest fixtures)
+    "ARG002", # Unused method argument (pytest fixtures)
+    "SLF001", # Private member access (testing internals)
+    "ANN",    # Type annotations not required in tests
+    "D100",   # Missing module docstring
+    "D101",   # Missing class docstring
+    "D102",   # Missing method docstring
+    "D103",   # Missing function docstring
+    "D104",   # Missing package docstring
+    "D107",   # Missing __init__ docstring
+    "DTZ001", # Naive datetimes are intentional in tests
+    "RUF001", # Ambiguous unicode characters (intentional test data)
+    "RUF046", # Unnecessary int cast (explicit in test assertions)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+ignore-decorators = ["typing.overload"]
+
+[tool.ruff.lint.pylint]
+allow-magic-value-types = ["int", "str", "float", "bytes"]

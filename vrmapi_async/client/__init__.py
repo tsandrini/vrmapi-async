@@ -1,14 +1,16 @@
 """Main asynchronous client for the Victron VRM API."""
 
 import logging
-from typing import Optional, Dict, Any, Type
+from types import TracebackType
+from typing import Any, Self
+
 import httpx
 
-from vrmapi_async.exceptions import VRMAuthenticationError, VRMAPIRequestError
-from vrmapi_async.client.schema import LoginResponse, DemoLoginResponse
-from vrmapi_async.routes import VRMRoutes
-from vrmapi_async.client.users.api import UsersNamespace
 from vrmapi_async.client.installations.api import InstallationsNamespace
+from vrmapi_async.client.schema import DemoLoginResponse, LoginResponse
+from vrmapi_async.client.users.api import UsersNamespace
+from vrmapi_async.exceptions import VRMAPIRequestError, VRMAuthenticationError
+from vrmapi_async.routes import VRMRoutes
 
 logger = logging.getLogger(__name__)
 
@@ -27,27 +29,32 @@ class VRMAsyncAPI:
         token: str | None = None,
         user_id_for_token: int | None = None,
         base_url: str = "https://vrmapi.victronenergy.com/v2",
-        headers: Dict[str, str] | None = None,
-        routes_cls: Type[VRMRoutes] = VRMRoutes,
-        httpx_client_kwargs: Dict[str, Any] = {},
-    ):
-        """
-        Initialise the VRM API client. You can authenticate via 3 different methods
+        headers: dict[str, str] | None = None,
+        routes_cls: type[VRMRoutes] = VRMRoutes,
+        httpx_client_kwargs: dict[str, Any] | None = None,
+    ) -> None:
+        """Initialize the VRM API client.
 
-        1. Credentials: pass `username` and `password`.
-        2. Demo: set `demo=True` to use the demo account. This is mostly for testing purposes.
-        3. Token: pass `token` and `user_id_for_token` to use a pre-configured API token.
+        Authenticate via one of 3 mutually exclusive methods:
 
-        :param username: Optional VRM portal username to use for credentials auth.
-        :param password: Optional VRM portal password to use for credentials auth.
+        1. Credentials: pass ``username`` and ``password``.
+        2. Demo: set ``demo=True`` to use the demo account.
+        3. Token: pass ``token`` and ``user_id_for_token``.
+
+        :param username: VRM portal username for credentials auth.
+        :param password: VRM portal password for credentials auth.
         :param demo: Set to True to use the demo account.
-        :token: Optional pre-configured API token for authentication.
-        :user_id_for_token: Optional user ID associated with the token. Required if using a token.
+        :param token: Pre-configured API token for authentication.
+        :param user_id_for_token: User ID associated with the token.
         :param base_url: The base URL for the VRM API.
-        :param headers: Optional dictionary of global headers for all requests.
-        :routes_cls: Optional custom routes class to use for API endpoints if you want to override the default routes.
-        :raises ValueError: If no authentication method is provided or if multiple methods are provided. Also raises if the provided token/user_id_for_token or username/password are not properly paired.
+        :param headers: Global headers for all requests.
+        :param routes_cls: Custom routes class to override defaults.
+        :param httpx_client_kwargs: Extra kwargs for httpx.AsyncClient.
+        :raises ValueError: If auth method is missing or ambiguous.
         """
+        if httpx_client_kwargs is None:
+            httpx_client_kwargs = {}
+
         auth_methods = sum(
             [
                 1 if (username and password) else 0,
@@ -57,23 +64,33 @@ class VRMAsyncAPI:
         )
 
         if auth_methods == 0:
-            raise ValueError(
-                "No authentication method provided. Please provide (username/password), demo=True, or (token/user_id_for_token)."
+            msg = (
+                "No authentication method provided. "
+                "Please provide (username/password), demo=True, "
+                "or (token/user_id_for_token)."
             )
+            raise ValueError(msg)
         if auth_methods > 1:
-            raise ValueError(
-                "Multiple authentication methods provided. Please provide only one: (username/password), demo=True, or (token/user_id_for_token)."
+            msg = (
+                "Multiple authentication methods provided. "
+                "Please provide only one: (username/password), "
+                "demo=True, or (token/user_id_for_token)."
             )
+            raise ValueError(msg)
 
         if (token and not user_id_for_token) or (not token and user_id_for_token):
-            raise ValueError(
-                "To properly use token authentication, both 'token' and 'user_id_for_token' must be provided."
+            msg = (
+                "To properly use token authentication, both "
+                "'token' and 'user_id_for_token' must be provided."
             )
+            raise ValueError(msg)
 
         if (username and not password) or (not username and password):
-            raise ValueError(
-                "To properly use credentials authentication, both 'username' and 'password' must be provided."
+            msg = (
+                "To properly use credentials authentication, both "
+                "'username' and 'password' must be provided."
             )
+            raise ValueError(msg)
 
         self.username = username
         self.password = password
@@ -81,8 +98,8 @@ class VRMAsyncAPI:
         self._pre_auth_token = token
         self._pre_auth_user_id = user_id_for_token
 
-        self.user_id: Optional[int] = None
-        self._auth_token: Optional[str] = None
+        self.user_id: int | None = None
+        self._auth_token: str | None = None
 
         self.global_headers = {"Content-Type": "application/json"}
         self.routes = routes_cls()
@@ -105,43 +122,48 @@ class VRMAsyncAPI:
         self.installations = InstallationsNamespace(self._request, self.routes)
 
     async def _login(self) -> None:
-        """Logs in using username and password."""
-        logger.info(f"Attempting to log in with username {self.username}")
+        """Log in using username and password."""
+        logger.info("Attempting to log in with username %s", self.username)
         try:
             response = await self._client.post(
                 self.routes.AUTH_LOGIN,
-                json={"username": self.username, "password": self.password},
+                json={
+                    "username": self.username,
+                    "password": self.password,
+                },
             )
-            response.raise_for_status()  # Raises HTTPStatusError for 4xx/5xx
+            response.raise_for_status()
             data = response.json()
             login_data = LoginResponse(**data)
             self._auth_token = login_data.token
             self.user_id = login_data.user_id
-            logger.info(f"Successfully logged in as user {self.user_id}")
+            logger.info("Successfully logged in as user %s", self.user_id)
         except httpx.HTTPStatusError as e:
             if e.response.status_code in (401, 403):
                 raise VRMAuthenticationError(
                     "Authentication failed: Check credentials."
                 ) from e
-            else:
-                raise VRMAPIRequestError(
-                    f"Login failed: {e.response.text}",
-                    e.response.status_code,
-                    e.response.text,
-                ) from e
+            raise VRMAPIRequestError(
+                f"Login failed: {e.response.text}",
+                e.response.status_code,
+                e.response.text,
+            ) from e
         except Exception as e:
             raise VRMAPIRequestError(
                 f"An unexpected error occurred during login: {e}"
             ) from e
 
     async def _logout(self) -> None:
-        logger.info(f"Attempting to log out user {self.username}")
+        """Log out and invalidate the current session."""
+        logger.info("Attempting to log out user %s", self.username)
         if not self._auth_token:
             raise VRMAuthenticationError("No active session to log out from. Exiting.")
 
         if self._auth_mode == "token":
             raise VRMAuthenticationError(
-                "Cannot log out when using token authentication. To invalidate the token, you must call the revoke endpoint instead."
+                "Cannot log out when using token authentication. "
+                "To invalidate the token, you must call the "
+                "revoke endpoint instead."
             )
 
         try:
@@ -150,31 +172,30 @@ class VRMAsyncAPI:
                 headers={"X-Authorization": f"Bearer {self._auth_token}"},
             )
             response.raise_for_status()
-            logger.info(f"Successfully logged out user {self.username}")
+            logger.info("Successfully logged out user %s", self.username)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 401:
                 raise VRMAuthenticationError(
                     "Already logged out or session expired."
                 ) from e
-            else:
-                raise VRMAPIRequestError(
-                    f"Logout failed: {e.response.text}",
-                    e.response.status_code,
-                    e.response.text,
-                ) from e
+            raise VRMAPIRequestError(
+                f"Logout failed: {e.response.text}",
+                e.response.status_code,
+                e.response.text,
+            ) from e
         except Exception as e:
             raise VRMAPIRequestError(
                 f"An unexpected error occurred during logout: {e}"
             ) from e
 
     async def _login_as_demo(self) -> None:
-        """Logs in using the demo account."""
+        """Log in using the demo account."""
         logger.debug("Attempting to log in as demo.")
         try:
             response = await self._client.get(self.routes.AUTH_DEMO)
             response.raise_for_status()
             data = response.json()
-            data["idUser"] = DEMO_USER_ID  # Ensure demo user ID is set
+            data["idUser"] = DEMO_USER_ID
             login_data = DemoLoginResponse(**data)
             self._auth_token = login_data.token
             self.user_id = login_data.user_id
@@ -191,23 +212,27 @@ class VRMAsyncAPI:
             ) from e
 
     async def connect(self) -> None:
-        """Establishes connection and authenticates to the API."""
-        logger.debug(f"Connecting to VRM API with auth mode: {self._auth_mode}")
+        """Establish connection and authenticate to the API."""
+        logger.debug(
+            "Connecting to VRM API with auth mode: %s",
+            self._auth_mode,
+        )
         if self._auth_mode == "token":
             self._auth_token = self._pre_auth_token
             self.user_id = self._pre_auth_user_id
-            logger.info(f"Using pre-configured API token for user {self.user_id}")
+            logger.info(
+                "Using pre-configured API token for user %s",
+                self.user_id,
+            )
         elif self._auth_mode == "demo":
             await self._login_as_demo()
         else:
             await self._login()
 
     async def disconnect(self) -> None:
-        """Logs out (if applicable) and closes the HTTP client session."""
+        """Log out (if applicable) and close the HTTP client session."""
         logger.debug("Attempting to disconnect from VRM API")
-        if (
-            self._auth_mode == "login" or self._auth_mode == "demo"
-        ) and self._auth_token:
+        if (self._auth_mode in {"login", "demo"}) and self._auth_token:
             await self._logout()
 
         self._auth_token = None
@@ -215,34 +240,37 @@ class VRMAsyncAPI:
         if not self._client.is_closed:
             await self._client.aclose()
 
-    async def __aenter__(self) -> "VRMAsyncAPI":
-        """Async context manager entry: connects and returns self."""
+    async def __aenter__(self) -> Self:
+        """Async context manager entry: connect and return self."""
         await self.connect()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Async context manager exit: closes the client."""
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Async context manager exit: close the client."""
         await self.disconnect()
 
     async def _request(
         self,
         method: str,
         url: str,
-        params: Dict | None = None,
-        json_data: Dict | None = None,
-        headers: Dict[str, str] | None = None,
-    ) -> Dict[str, Any]:
-        """
-        Internal wrapper for making authenticated API requests with additional
-        global set headers and error handling.
+        params: dict | None = None,
+        json_data: dict | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Make an authenticated API request with error handling.
 
         :param method: HTTP method (GET, POST, etc.)
         :param url: The endpoint URL to request.
-        :param params: Optional dictionary of the query parameters.
-        :param json_data: Optional dictionary of JSON data to send in the request body.
-        :param headers: Optional dictionary of additional headers to include in the request.
+        :param params: Optional query parameters.
+        :param json_data: Optional JSON body.
+        :param headers: Optional additional headers.
         :returns: Parsed JSON response as a dictionary.
-        :raises VRMAPIRequestError: If the request fails or the API indicates an error.
+        :raises VRMAPIRequestError: If the request fails.
         """
         if not self._auth_token:
             raise VRMAuthenticationError("Not logged in. Call connect() first.")
@@ -256,12 +284,19 @@ class VRMAsyncAPI:
             request_headers.update(headers)
 
         logger.debug(
-            f"Sending {method} request to {url} with params {params} and headers {request_headers}"
+            "Sending %s request to %s with params %s",
+            method,
+            url,
+            params,
         )
 
         try:
             response = await self._client.request(
-                method, url, headers=request_headers, params=params, json=json_data
+                method,
+                url,
+                headers=request_headers,
+                params=params,
+                json=json_data,
             )
             response.raise_for_status()
             json_response = response.json()
@@ -270,7 +305,8 @@ class VRMAsyncAPI:
                 "success", True
             ):
                 raise VRMAPIRequestError(
-                    f"API indicated failure: {json_response.get('errors', 'Unknown error')}",
+                    "API indicated failure: "
+                    f"{json_response.get('errors', 'Unknown error')}",
                     response.status_code,
                     response.text,
                 )

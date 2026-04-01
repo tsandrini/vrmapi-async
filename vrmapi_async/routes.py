@@ -1,3 +1,5 @@
+"""VRM API endpoint route definitions."""
+
 from dataclasses import dataclass
 
 

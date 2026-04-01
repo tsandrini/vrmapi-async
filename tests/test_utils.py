@@ -1,11 +1,12 @@
-import pytest
 import math
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
+import pytest
 
 from vrmapi_async.utils import (
-    to_snake_case,
     datetime_to_epoch,
     snake_case_to_camel_case,
+    to_snake_case,
 )
 
 
@@ -40,7 +41,8 @@ class TestDateTimeToEpoch:
         assert datetime_to_epoch(aware_dt_input_utc) == expected_epoch
 
     @pytest.mark.parametrize(
-        "year, month, day, hour, minute, second, microsecond, tz_offset_hours, expected_epoch_from_utc_calc",
+        "year, month, day, hour, minute, second, microsecond,"
+        " tz_offset_hours, expected_epoch_from_utc_calc",
         [
             (2023, 7, 15, 12, 0, 0, 0, 2, 1689415200),  # UTC: 2023-07-15 10:00:00
             (2023, 7, 15, 5, 0, 0, 0, -5, 1689415200),  # UTC: 2023-07-15 10:00:00
@@ -324,10 +326,10 @@ class TestSnakeCaseToCamelCase:
         ],
     )
     def test_edge_cases_with_underscores(self, input_str, expected_output):
-        """
-        Tests snake_case strings with leading, trailing, or multiple consecutive underscores.
-        The output reflects the behavior of string.split('_') and string.title().
-        Note: For Pydantic field names, these inputs are atypical.
+        """Test snake_case with leading, trailing, or multiple underscores.
+
+        The output reflects the behavior of string.split('_') and
+        string.title(). For Pydantic field names, these inputs are atypical.
         """
         assert snake_case_to_camel_case(input_str) == expected_output
 

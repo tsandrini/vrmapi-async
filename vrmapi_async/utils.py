@@ -1,13 +1,12 @@
 """Utility functions for the VRM API client."""
 
-import re
 import math
+import re
 from datetime import datetime, timezone
 
 
 def datetime_to_epoch(dt: datetime) -> int:
-    """
-    Converts a Python datetime object to an epoch timestamp (integer seconds).
+    """Convert a Python datetime object to an epoch timestamp (integer seconds).
 
     Ensures the datetime is timezone-aware (UTC) before conversion if naive.
     Rounds up to the nearest second to match the original implementation's behavior.
@@ -20,16 +19,15 @@ def datetime_to_epoch(dt: datetime) -> int:
         # Or, for consistency, always assume UTC if naive:
         dt = dt.replace(tzinfo=timezone.utc)
 
-    # Use timestamp() which returns seconds since epoch as a float, then ceil and int
-    return int(math.ceil(dt.timestamp()))
+    # Use timestamp() which returns seconds since epoch as a float, then ceil
+    return math.ceil(dt.timestamp())
 
 
 def to_snake_case(s: str) -> str:
-    """
-    Convert a string from various casings (CamelCase, PascalCase, kebab-case, space-separated)
-    to snake_case.
+    """Convert a string from various casings to snake_case.
 
-    Handles acronyms as well (e.g., "HTTPRequest" -> "http_request").
+    Handles CamelCase, PascalCase, kebab-case, space-separated strings,
+    and acronyms (e.g., "HTTPRequest" -> "http_request").
 
     :param s: The input string to convert.
     :returns: The converted string in snake_case.
@@ -42,14 +40,11 @@ def to_snake_case(s: str) -> str:
     s = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s)
     s = s.lower()
     s = re.sub(r"_+", "_", s)
-    s = s.strip("_")
-
-    return s
+    return s.strip("_")
 
 
 def snake_case_to_camel_case(snake_str: str) -> str:
-    """
-    Assuming a snake_case input string, this function converts it to camelCase.
+    """Convert a snake_case input string to camelCase.
 
     :param snake_str: The input string in snake_case.
     :returns: The converted string in camelCase.
