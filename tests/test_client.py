@@ -72,8 +72,25 @@ class TestConstructorValidation:
         assert client.global_headers["Content-Type"] == "application/json"
 
     def test_httpx_kwargs_forwarded(self):
-        client = VRMAsyncAPI(demo=True, httpx_client_kwargs={"timeout": 5.0})
-        assert client._client._timeout == httpx.Timeout(5.0)
+        client = VRMAsyncAPI(demo=True, httpx_client_kwargs={"follow_redirects": True})
+        assert client._client.follow_redirects is True
+
+    def test_default_timeout(self):
+        client = VRMAsyncAPI(demo=True)
+        assert client._client._timeout == httpx.Timeout(30.0)
+
+    def test_custom_timeout_float(self):
+        client = VRMAsyncAPI(demo=True, timeout=10.0)
+        assert client._client._timeout == httpx.Timeout(10.0)
+
+    def test_custom_timeout_object(self):
+        timeout = httpx.Timeout(5.0, connect=2.0)
+        client = VRMAsyncAPI(demo=True, timeout=timeout)
+        assert client._client._timeout == timeout
+
+    def test_timeout_none_disables(self):
+        client = VRMAsyncAPI(demo=True, timeout=None)
+        assert client._client._timeout == httpx.Timeout(None)
 
 
 # ---------------------------------------------------------------------------

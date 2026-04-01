@@ -387,3 +387,10 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# LLM/AIS
+
+AGENTS.md
+CLAUDE.md
+run-in
+vrm-probe

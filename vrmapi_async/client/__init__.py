@@ -39,6 +39,7 @@ class VRMAsyncAPI:
         headers: dict[str, str] | None = None,
         routes_cls: type[VRMRoutes] = VRMRoutes,
         httpx_client_kwargs: dict[str, Any] | None = None,
+        timeout: float | httpx.Timeout | None = 30.0,
         max_retries: int = 3,
         retry_backoff_base: float = 1.0,
         retry_on_5xx: bool = True,
@@ -60,6 +61,8 @@ class VRMAsyncAPI:
         :param headers: Global headers for all requests.
         :param routes_cls: Custom routes class to override defaults.
         :param httpx_client_kwargs: Extra kwargs for httpx.AsyncClient.
+        :param timeout: Request timeout in seconds, an httpx.Timeout
+            instance, or None to disable. Defaults to 30s.
         :param max_retries: Maximum number of retry attempts for rate
             limits and transient errors.
         :param retry_backoff_base: Base delay in seconds for exponential
@@ -124,7 +127,7 @@ class VRMAsyncAPI:
         self.routes = routes_cls()
 
         self._client: httpx.AsyncClient = httpx.AsyncClient(
-            base_url=base_url, **httpx_client_kwargs
+            base_url=base_url, timeout=timeout, **httpx_client_kwargs
         )
 
         if headers:
