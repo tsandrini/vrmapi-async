@@ -9,6 +9,8 @@ from vrmapi_async.client.base.schema import (
     BaseModel,
     BaseResponseModel,
     BaseUser,
+    RecordsListResponse,
+    RecordsSingleResponse,
     UserIdField,
 )
 
@@ -231,18 +233,12 @@ class SiteExtended(Site):
         return v
 
 
-class UserSitesResponse(BaseResponseModel):
+class UserSitesResponse(RecordsListResponse[Site]):
     """Response model for fetching non-extended user sites."""
 
-    success: bool
-    records: list[Site] = []
 
-
-class UserSitesExtendedResponse(BaseResponseModel):
+class UserSitesExtendedResponse(RecordsListResponse[SiteExtended]):
     """Response model for fetching extended user sites."""
-
-    success: bool
-    records: list[SiteExtended] = []
 
 
 class AccessToken(BaseModel):
@@ -309,24 +305,18 @@ class RevokeAccessTokenData(BaseModel):
     removed: int
 
 
-class SiteIdByIdentifierResponse(BaseResponseModel):
+class SiteIdByIdentifierResponse(RecordsSingleResponse[SiteId]):
     """Response model for getting a site ID by installation identifier.
 
     Mainly used for the records.site_id field.
     """
 
-    success: bool
-    records: SiteId
 
-
-class CreateInstallationResponse(BaseResponseModel):
+class CreateInstallationResponse(RecordsSingleResponse[SiteId]):
     """Response model for creating a new installation.
 
     Contains the created Site object.
     """
-
-    success: bool
-    records: SiteId
 
 
 class AboutMeResponse(BaseResponseModel):

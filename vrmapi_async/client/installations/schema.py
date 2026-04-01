@@ -4,7 +4,12 @@ from typing import Any
 
 from pydantic import Field, model_validator
 
-from vrmapi_async.client.base.schema import BaseModel, BaseResponseModel, BaseUser
+from vrmapi_async.client.base.schema import (
+    BaseModel,
+    BaseResponseModel,
+    BaseUser,
+    RecordsSingleResponse,
+)
 
 
 class StatsRecord(BaseModel):
@@ -52,11 +57,9 @@ class ConsumptionData(BaseModel):
         return data
 
 
-class ConsumptionStatsResponse(BaseResponseModel):
+class ConsumptionStatsResponse(RecordsSingleResponse[ConsumptionData]):
     """Response model for consumption/kwh stats."""
 
-    success: bool
-    records: ConsumptionData
     totals: dict[str, Any]
 
 
