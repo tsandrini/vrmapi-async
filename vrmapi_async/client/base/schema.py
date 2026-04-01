@@ -1,7 +1,7 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import ConfigDict, AliasChoices, Field
+from pydantic import ConfigDict, AliasChoices, Field, PrivateAttr
 from vrmapi_async.utils import snake_case_to_camel_case
 
 UserIdField = Annotated[
@@ -17,7 +17,7 @@ class BaseTemplateModel(PydanticBaseModel):
 
     model_config = ConfigDict(
         alias_generator=lambda field_name: snake_case_to_camel_case(field_name),
-        extra="allow",  # TODO change in prod
+        extra="ignore",
         validate_by_name=True,
     )
 
@@ -34,10 +34,16 @@ class BaseModel(BaseTemplateModel):
 class BaseResponseModel(BaseTemplateModel):
     """
     Base model for all VRM API response schemas.
-    Inherits from BaseTemplateModel to apply global configuration.
+
+    Captures the raw response dict in ``_raw`` so callers can access
+    undocumented or unexpected fields that Pydantic would otherwise drop.
     """
 
-    pass
+    _raw: dict = PrivateAttr(default_factory=dict)
+
+    def __init__(self, **data: Any) -> None:
+        super().__init__(**data)
+        self._raw = data
 
 
 class BaseUser(BaseModel):

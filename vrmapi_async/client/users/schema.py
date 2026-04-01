@@ -1,9 +1,10 @@
 # --- vrmapi_async/models.py
 """Pydantic models for VRM API responses."""
+
 from enum import IntEnum, Enum
 from typing import List, Any, Dict, Annotated
 
-from pydantic import Field, field_validator, Json
+from pydantic import ConfigDict, Field, field_validator, Json, AliasChoices
 from vrmapi_async.client.base.schema import (
     BaseModel,
     BaseResponseModel,
@@ -20,7 +21,7 @@ class AlarmMonitoringLevel(IntEnum):
 
 class User(BaseUser):
     # -- DEFINED BY DOCS --
-    user_id: UserIdField
+    user_id: int = Field(validation_alias=AliasChoices("id", "user_id"))
     # -- UNDOCUMENTED --
     access_token_id: int | None = Field(None, alias="idAccessToken")
 
@@ -86,6 +87,10 @@ class InstallationExtendedAttribute(BaseModel):
     """
     Model for an extended installation attribute.
 
+    Uses ``extra="allow"`` because the VRM API returns unpredictable and
+    undocumented fields here, and the recursive/nested structure makes
+    strict validation impractical.
+
     The main struggle of this model is that it can be nested and recursive,
     that is, a parent attribute can have child attributes, which is why
     every field is optional. Most of the attributes are required
@@ -95,6 +100,8 @@ class InstallationExtendedAttribute(BaseModel):
     You can practically test this with `len(attribute.data_attributes) > 0`,
     and traverse from here.
     """
+
+    model_config = ConfigDict(extra="allow")
 
     # -- DEFINED BY DOCS --
     data_attribute_id: int | None = Field(None, alias="idDataAttribute")
