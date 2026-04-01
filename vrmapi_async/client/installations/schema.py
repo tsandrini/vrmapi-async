@@ -86,7 +86,6 @@ class PendingUser(BaseModel):
 
 
 class ListUsersResponse(BaseResponseModel):
-
     success: bool
     users: List[User]
     invites: List[InvitedUser] = []

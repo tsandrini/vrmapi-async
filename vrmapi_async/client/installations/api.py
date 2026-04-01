@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class InstallationsNamespace(BaseNamespace):
-
     async def get_consumption_stats(
         self,
         site_id: int,

@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class UsersNamespace(BaseNamespace):
-
     async def about_me(self) -> AboutMeResponse:
         """
         Fetches information about the currently authenticated user.

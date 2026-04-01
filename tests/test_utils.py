@@ -10,7 +10,6 @@ from vrmapi_async.utils import (
 
 
 class TestDateTimeToEpoch:
-
     @pytest.mark.parametrize(
         "naive_dt_input, expected_epoch",
         [
@@ -89,9 +88,9 @@ class TestDateTimeToEpoch:
 
         utc_equivalent = aware_dt.astimezone(timezone.utc)
         expected_epoch_verified = int(math.ceil(utc_equivalent.timestamp()))
-        assert (
-            expected_epoch_verified == expected_epoch_from_utc_calc
-        ), "Mismatch in test data pre-calculation"
+        assert expected_epoch_verified == expected_epoch_from_utc_calc, (
+            "Mismatch in test data pre-calculation"
+        )
 
         assert datetime_to_epoch(aware_dt) == expected_epoch_from_utc_calc
 
@@ -132,7 +131,6 @@ class TestDateTimeToEpoch:
 
 
 class TestToSnakeCase:
-
     @pytest.mark.parametrize(
         "input_str, expected_output",
         [
@@ -267,7 +265,6 @@ class TestToSnakeCase:
 
 
 class TestSnakeCaseToCamelCase:
-
     @pytest.mark.parametrize(
         "input_str, expected_output",
         [

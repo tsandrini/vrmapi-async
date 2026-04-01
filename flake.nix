@@ -29,7 +29,7 @@
   };
 
   outputs =
-    inputs@{ flake-parts, flake-parts-builder, ... }:
+    inputs@{ flake-parts, ... }:
     let
       inherit (inputs.flake-parts-builder.lib) loadParts;
     in
