@@ -51,12 +51,14 @@ testpaths = [
 [dependency-groups]
 dev = [
     "ipython>=8.18.1",
+    "ruff>=0.4.0",
+    {include-group = "test"},
+]
+test = [
     "pytest>=8.3.5",
+    "pytest-asyncio>=0.23.0",
     "respx>=0.22.0",
 ]
-# markers = [
-#     "online: marks tests as online (require network and hit the real VRM demo API)",
-# ]
 
 [tool.mypy]
 strict = true
@@ -138,6 +140,7 @@ line-length = 88
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = [
     "S101",   # Use of assert detected
+    "S105",   # Possible hardcoded password in variable (test fixtures)
     "S106",   # Possible hardcoded password (test fixtures)
     "ARG001", # Unused function argument (pytest fixtures)
     "ARG002", # Unused method argument (pytest fixtures)
@@ -152,6 +155,7 @@ line-length = 88
     "DTZ001", # Naive datetimes are intentional in tests
     "RUF001", # Ambiguous unicode characters (intentional test data)
     "RUF046", # Unnecessary int cast (explicit in test assertions)
+    "PLC0415", # Inline imports acceptable in tests
 ]
 
 [tool.ruff.lint.pydocstyle]
