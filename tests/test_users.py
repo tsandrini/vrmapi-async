@@ -426,7 +426,7 @@ class TestCreateAccessToken:
 class TestRevokeAccessToken:
     async def test_returns_response(self, mock_api):
         payload = {"success": True, "data": {"removed": 1}}
-        respx.get(f"{BASE}/users/{USER_ID}/accesstokens/99/revoke").mock(
+        respx.delete(f"{BASE}/users/{USER_ID}/accesstokens/99").mock(
             return_value=httpx.Response(200, json=payload)
         )
         await mock_api.connect()

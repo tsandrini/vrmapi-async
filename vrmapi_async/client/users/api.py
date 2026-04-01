@@ -143,5 +143,5 @@ class UsersNamespace(BaseNamespace):
         url = self.routes.USERS_ACCESSTOKENS_REVOKE.format(
             user_id=user_id, access_token_id=access_token_id
         )
-        response_data = await self._request("GET", url)
+        response_data = await self._request("DELETE", url)
         return RevokeAccessTokenResponse(**response_data)

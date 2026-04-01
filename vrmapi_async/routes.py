@@ -18,9 +18,7 @@ class VRMRoutes:
     USERS_INSTALLATIONS_CREATE: str = "/users/{user_id}/addsite"
     USERS_ACCESSTOKENS_LIST: str = "/users/{user_id}/accesstokens/list"
     USERS_ACCESSTOKENS_CREATE: str = "/users/{user_id}/accesstokens/create"
-    USERS_ACCESSTOKENS_REVOKE: str = (
-        "/users/{user_id}/accesstokens/{access_token_id}/revoke"
-    )
+    USERS_ACCESSTOKENS_REVOKE: str = "/users/{user_id}/accesstokens/{access_token_id}"
 
     INSTALLATIONS_STATS: str = "/installations/{site_id}/stats"
     INSTALLATIONS_OVERALL_STATS: str = "/installations/{site_id}/overallstats"
