@@ -1,5 +1,6 @@
 """Main asynchronous client for the Victron VRM API."""
 
+import asyncio
 import logging
 from types import TracebackType
 from typing import Any, Self
@@ -9,7 +10,11 @@ import httpx
 from vrmapi_async.client.installations.api import InstallationsNamespace
 from vrmapi_async.client.schema import DemoLoginResponse, LoginResponse
 from vrmapi_async.client.users.api import UsersNamespace
-from vrmapi_async.exceptions import VRMAPIRequestError, VRMAuthenticationError
+from vrmapi_async.exceptions import (
+    VRMAPIRequestError,
+    VRMAuthenticationError,
+    VRMRateLimitError,
+)
 from vrmapi_async.routes import VRMRoutes
 
 logger = logging.getLogger(__name__)
@@ -20,6 +25,8 @@ DEMO_SITE_ID = 151734
 
 class VRMAsyncAPI:
     """Asynchronous Python client for the Victron VRM API."""
+
+    RETRYABLE_STATUS_CODES = frozenset({500, 502, 503, 504})
 
     def __init__(
         self,
@@ -32,6 +39,9 @@ class VRMAsyncAPI:
         headers: dict[str, str] | None = None,
         routes_cls: type[VRMRoutes] = VRMRoutes,
         httpx_client_kwargs: dict[str, Any] | None = None,
+        max_retries: int = 3,
+        retry_backoff_base: float = 1.0,
+        retry_on_5xx: bool = True,
     ) -> None:
         """Initialize the VRM API client.
 
@@ -50,6 +60,11 @@ class VRMAsyncAPI:
         :param headers: Global headers for all requests.
         :param routes_cls: Custom routes class to override defaults.
         :param httpx_client_kwargs: Extra kwargs for httpx.AsyncClient.
+        :param max_retries: Maximum number of retry attempts for rate
+            limits and transient errors.
+        :param retry_backoff_base: Base delay in seconds for exponential
+            backoff (delay = base * 2^attempt).
+        :param retry_on_5xx: Whether to retry on transient 5xx errors.
         :raises ValueError: If auth method is missing or ambiguous.
         """
         if httpx_client_kwargs is None:
@@ -100,6 +115,10 @@ class VRMAsyncAPI:
 
         self.user_id: int | None = None
         self._auth_token: str | None = None
+
+        self._max_retries = max_retries
+        self._retry_backoff_base = retry_backoff_base
+        self._retry_on_5xx = retry_on_5xx
 
         self.global_headers = {"Content-Type": "application/json"}
         self.routes = routes_cls()
@@ -262,7 +281,11 @@ class VRMAsyncAPI:
         json_data: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        """Make an authenticated API request with error handling.
+        """Make an authenticated API request with retry and rate-limit handling.
+
+        Retries on 429 (rate limit) responses, respecting the ``Retry-After``
+        header. Optionally retries on transient 5xx errors. Uses exponential
+        backoff: ``max(retry_after, base * 2^attempt)`` seconds.
 
         :param method: HTTP method (GET, POST, etc.)
         :param url: The endpoint URL to request.
@@ -270,6 +293,7 @@ class VRMAsyncAPI:
         :param json_data: Optional JSON body.
         :param headers: Optional additional headers.
         :returns: Parsed JSON response as a dictionary.
+        :raises VRMRateLimitError: If rate limit retries are exhausted.
         :raises VRMAPIRequestError: If the request fails.
         """
         if not self._auth_token:
@@ -290,35 +314,115 @@ class VRMAsyncAPI:
             params,
         )
 
-        try:
-            response = await self._client.request(
-                method,
-                url,
-                headers=request_headers,
-                params=params,
-                json=json_data,
-            )
-            response.raise_for_status()
-            json_response = response.json()
+        last_exception: httpx.HTTPStatusError | None = None
 
-            if isinstance(json_response, dict) and not json_response.get(
-                "success", True
-            ):
-                raise VRMAPIRequestError(
-                    "API indicated failure: "
-                    f"{json_response.get('errors', 'Unknown error')}",
-                    response.status_code,
-                    response.text,
+        for attempt in range(self._max_retries + 1):
+            try:
+                response = await self._client.request(
+                    method,
+                    url,
+                    headers=request_headers,
+                    params=params,
+                    json=json_data,
                 )
-            return json_response
+                response.raise_for_status()
+                json_response = response.json()
 
-        except httpx.HTTPStatusError as e:
-            raise VRMAPIRequestError(
-                f"API request failed: {e.response.text}",
-                e.response.status_code,
-                e.response.text,
-            ) from e
-        except Exception as e:
-            raise VRMAPIRequestError(
-                f"An unexpected error occurred during request: {e}"
-            ) from e
+                if isinstance(json_response, dict) and not json_response.get(
+                    "success", True
+                ):
+                    raise VRMAPIRequestError(
+                        "API indicated failure: "
+                        f"{json_response.get('errors', 'Unknown error')}",
+                        response.status_code,
+                        response.text,
+                    )
+                return json_response
+
+            except httpx.HTTPStatusError as e:
+                last_exception = e
+                wait = self._get_retry_delay(e, attempt)
+                if wait is not None:
+                    logger.warning(
+                        "%d on %s %s, retry %d/%d in %.1fs",
+                        e.response.status_code,
+                        method,
+                        url,
+                        attempt + 1,
+                        self._max_retries,
+                        wait,
+                    )
+                    await asyncio.sleep(wait)
+                    continue
+                raise VRMAPIRequestError(
+                    f"API request failed: {e.response.text}",
+                    e.response.status_code,
+                    e.response.text,
+                ) from e
+
+            except VRMAPIRequestError:
+                raise
+
+            except Exception as e:
+                raise VRMAPIRequestError(
+                    f"An unexpected error occurred during request: {e}"
+                ) from e
+
+        # All retries exhausted — raise the appropriate error
+        assert last_exception is not None  # noqa: S101
+        status = last_exception.response.status_code
+        text = last_exception.response.text
+        if status == 429:
+            raise VRMRateLimitError(
+                f"Rate limit exceeded after {self._max_retries} retries: {text}",
+                status,
+                text,
+            ) from last_exception
+        raise VRMAPIRequestError(
+            f"Server error {status} after {self._max_retries} retries: {text}",
+            status,
+            text,
+        ) from last_exception
+
+    def _get_retry_delay(
+        self,
+        error: httpx.HTTPStatusError,
+        attempt: int,
+    ) -> float | None:
+        """Return seconds to wait before retrying, or None if not retryable.
+
+        :param error: The HTTP error from the failed request.
+        :param attempt: Zero-based attempt index.
+        :returns: Delay in seconds, or None if the error should not be retried.
+        """
+        status = error.response.status_code
+        is_last_attempt = attempt >= self._max_retries
+
+        if status == 429 and not is_last_attempt:
+            retry_after = self._parse_retry_after(error.response)
+            return max(retry_after, self._retry_backoff_base * (2**attempt))
+
+        if (
+            self._retry_on_5xx
+            and status in self.RETRYABLE_STATUS_CODES
+            and not is_last_attempt
+        ):
+            return self._retry_backoff_base * (2**attempt)
+
+        return None
+
+    @staticmethod
+    def _parse_retry_after(response: httpx.Response) -> float:
+        """Extract Retry-After value from response headers.
+
+        :param response: The HTTP response to extract from.
+        :returns: Seconds to wait, or 0.0 if header is missing/invalid.
+        """
+        raw = response.headers.get("Retry-After")
+        if raw is None:
+            return 0.0
+        try:
+            return float(raw)
+        except ValueError:
+            logger.warning("Could not parse Retry-After header: %s", raw)
+            return 0.0

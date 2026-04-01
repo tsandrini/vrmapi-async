@@ -31,3 +31,7 @@ class VRMAPIRequestError(VRMAPIError):
         if self.response_text:
             parts.append(f"Response: {self.response_text}")
         return " - ".join(parts)
+
+
+class VRMRateLimitError(VRMAPIRequestError):
+    """Raised when rate limit is exceeded and all retries are exhausted."""
