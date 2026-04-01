@@ -394,3 +394,5 @@ AGENTS.md
 CLAUDE.md
 run-in
 vrm-probe
+vrmapi-routes-list.yaml
+vrmapi-full-specification.yaml
