@@ -18,6 +18,7 @@
       pre-commit.settings = {
         excludes = [
           "flake.lock" # NOTE: prettier thinks this is json >.< prettier baka!!!
+          "CHANGELOG.md"
         ];
 
         hooks = {
