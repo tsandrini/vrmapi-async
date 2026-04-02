@@ -1,76 +1,117 @@
 # vrmapi-async
 
 A modern, async Python client for the
-[Victron Energy VRM API](https://vrm-api-docs.victronenergy.com/), built on
-`httpx` and `pydantic v2`.
+[Victron Energy VRM API](https://vrm-api-docs.victronenergy.com/).
 
-## How to use
+Built on [httpx](https://www.python-httpx.org/) and
+[Pydantic v2](https://docs.pydantic.dev/), `vrmapi-async` provides
+a fully typed, async-first interface to the VRM portal.
 
-### Installation
+**Key features:**
+
+- **Fully async** --- built on `httpx.AsyncClient`
+  with native `async with` support
+- **Pydantic v2 models** --- all responses are parsed into
+  typed models with full IDE autocompletion
+- **Three auth modes** --- credentials, demo account, or API token
+- **Automatic retry** --- rate limit (429) and transient 5xx
+  handling with exponential backoff
+- **Raw response escape hatch** --- access undocumented fields
+  via `response._raw`
+- **Namespace-based API** --- `client.users.*`,
+  `client.installations.*`
+
+## Installation
 
 ```bash
 pip install vrmapi-async
 ```
 
-### Authentication
+Or with your preferred package manager:
 
-The client supports three authentication modes:
+<!-- markdownlint-disable MD046 -->
+=== "uv"
 
-```python
-from vrmapi_async.client import VRMAsyncAPI
+    ```bash
+    uv add vrmapi-async
+    ```
 
-# 1. Username + password
-async with VRMAsyncAPI(username="you@example.com", password="secret") as client:
-    me = await client.users.about_me()
+=== "poetry"
 
-# 2. API access token
-async with VRMAsyncAPI(token="your-token", user_id_for_token=12345) as client:
-    sites = await client.users.list_installations(client.user_id)
+    ```bash
+    poetry add vrmapi-async
+    ```
+<!-- markdownlint-enable MD046 -->
 
-# 3. Demo account (for testing)
-async with VRMAsyncAPI(demo=True) as client:
-    sites = await client.users.list_installations(client.user_id)
-```
+**Requirements:** Python 3.10+,
+[httpx](https://www.python-httpx.org/) >= 0.27.0,
+[Pydantic](https://docs.pydantic.dev/) >= 2.7.0
 
-### Examples
+## Quick start
+
+The fastest way to try things out --- no credentials needed,
+using the VRM demo account:
 
 ```python
 import asyncio
-from vrmapi_async.client import VRMAsyncAPI
+from vrmapi_async import VRMAsyncAPI
 
 async def main():
     async with VRMAsyncAPI(demo=True) as client:
-        # List installations
-        installations = await client.users.list_installations(client.user_id)
-        print(installations.records)
+        me = await client.users.about_me()
+        print(f"Logged in as: {me.user.name}")
 
-        # Get consumption stats for a site
-        stats = await client.installations.get_consumption_stats(site_id=151734)
-        print(stats.records)
-
-        # List users with access to a site
-        users = await client.installations.list_users(site_id=151734)
-        print(users.records)
+        installations = await client.users.list_installations(
+            client.user_id
+        )
+        for site in installations.records:
+            print(f"  Site: {site.name} (ID: {site.id_site})")
 
 asyncio.run(main())
 ```
 
-## Developer environment
+### Other authentication modes
 
-This project uses [Nix](https://nixos.org/) with [direnv](https://direnv.net/)
-for reproducible development environments.
+<!-- markdownlint-disable MD046 -->
+=== "Credentials"
 
-```bash
-# 1. Install Nix (if you don't have it)
-#    https://nixos.org/download/
+    ```python
+    async with VRMAsyncAPI(
+        username="you@example.com", password="secret"
+    ) as client:
+        installations = await client.users.list_installations(
+            client.user_id
+        )
+        for site in installations.records:
+            print(site.name)
+    ```
 
-# 2. Enter the dev environment
-cd vrmapi-async
-direnv allow   # or: nix develop
+=== "API token"
 
-# 3. Run tests
-pytest tests/ -v
+    ```python
+    async with VRMAsyncAPI(
+        token="your-token", user_id_for_token=12345
+    ) as client:
+        tokens = await client.users.list_access_tokens(
+            client.user_id
+        )
+        print(f"You have {len(tokens.records)} access tokens")
+    ```
 
-# 4. Run linters
-pre-commit run --all-files
-```
+=== "Manual connect/disconnect"
+
+    ```python
+    client = VRMAsyncAPI(demo=True)
+    await client.connect()
+
+    try:
+        me = await client.users.about_me()
+        print(me.user.name)
+    finally:
+        await client.disconnect()
+    ```
+<!-- markdownlint-enable MD046 -->
+
+## License
+
+EUPL-1.2

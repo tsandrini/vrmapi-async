@@ -71,7 +71,8 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      base_path: ["."]
   - pymdownx.tabbed:
       alternate_style: true
   - toc:
@@ -84,4 +85,4 @@ nav:
   - Usage: usage.md
   - API Reference: reference/
   - Contributing: contributing.md
-  - Changelog: changelog.md
+  - Changelog: CHANGELOG.md
