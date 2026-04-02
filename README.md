@@ -10,17 +10,17 @@ portal.
 
 **Key features:**
 
-- **Fully async** --- built on `httpx.AsyncClient`
+- **Fully async**: built on `httpx.AsyncClient`
   with native `async with` support
-- **Pydantic v2 models** --- all responses are parsed into
+- **Pydantic v2 models**: all responses are parsed into
   typed models with full IDE autocompletion
-- **Three auth modes** --- credentials, demo account, or
+- **Three auth modes**: credentials, demo account, or
   API token
-- **Automatic retry** --- rate limit (429) and transient 5xx
+- **Automatic retries**: rate limit (429) and transient 5xx
   handling with exponential backoff
-- **Raw response escape hatch** --- access undocumented
+- **Raw response escape hatch**: access undocumented
   fields via `response._raw`
-- **Namespace-based API** --- `client.users.*`,
+- **Namespace-based API**: `client.users.*`,
   `client.installations.*`
 
 ## Installation
