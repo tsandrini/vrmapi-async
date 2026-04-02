@@ -1,0 +1,75 @@
+/* Auto-number headings (h2, h3, h4) in article content */
+.md-content article {
+  counter-reset: h2counter;
+}
+
+.md-content article h2 {
+  counter-reset: h3counter;
+  counter-increment: h2counter;
+}
+
+.md-content article h2::before {
+  content: counter(h2counter) ". ";
+}
+
+.md-content article h3 {
+  counter-reset: h4counter;
+  counter-increment: h3counter;
+}
+
+.md-content article h3::before {
+  content: counter(h2counter) "." counter(h3counter) ". ";
+}
+
+.md-content article h4 {
+  counter-increment: h4counter;
+}
+
+.md-content article h4::before {
+  content: counter(h2counter) "." counter(h3counter) "." counter(h4counter) ". ";
+}
+
+/* Auto-number TOC (right sidebar) to match headings */
+.md-nav--secondary > .md-nav__list {
+  counter-reset: toc-h2;
+}
+
+.md-nav--secondary > .md-nav__list > .md-nav__item {
+  counter-increment: toc-h2;
+  counter-reset: toc-h3;
+}
+
+.md-nav--secondary > .md-nav__list > .md-nav__item > .md-nav__link::before {
+  content: counter(toc-h2) ". ";
+}
+
+.md-nav--secondary > .md-nav__list > .md-nav__item > .md-nav > .md-nav__list {
+  counter-reset: toc-h3;
+}
+
+.md-nav--secondary > .md-nav__list > .md-nav__item > .md-nav > .md-nav__list > .md-nav__item {
+  counter-increment: toc-h3;
+  counter-reset: toc-h4;
+}
+
+.md-nav--secondary > .md-nav__list > .md-nav__item > .md-nav > .md-nav__list > .md-nav__item > .md-nav__link::before {
+  content: counter(toc-h2) "." counter(toc-h3) ". ";
+}
+
+.md-nav--secondary > .md-nav__list > .md-nav__item > .md-nav > .md-nav__list > .md-nav__item > .md-nav > .md-nav__list > .md-nav__item {
+  counter-increment: toc-h4;
+}
+
+.md-nav--secondary > .md-nav__list > .md-nav__item > .md-nav > .md-nav__list > .md-nav__item > .md-nav > .md-nav__list > .md-nav__item > .md-nav__link::before {
+  content: counter(toc-h2) "." counter(toc-h3) "." counter(toc-h4) ". ";
+}
+
+/* Hide left sidebar on pages with no meaningful sub-navigation.
+   The left sidebar only adds value for the API Reference (which has
+   multiple generated sub-pages). For single-page sections it just
+   shows one lonely entry. We hide it and let content take the full width. */
+@media screen and (min-width: 76.25em) {
+  .md-nav--primary > .md-nav__list > .md-nav__item--active > .md-nav:only-child {
+    display: none;
+  }
+}

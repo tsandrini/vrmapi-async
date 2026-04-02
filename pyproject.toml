@@ -4,18 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vrmapi-async"
-version = "0.1.0"
+version = "0.0.0"
 description = "A modern, async Python client for the Victron VRM API."
 readme = "README.md"
 requires-python = ">3.9.1,<4"
-license = { file = "LICENSE" } # TODO
+license = { file = "LICENSE" }
 authors = [
   { name="Tomáš Sandrini", email="t@tsandrini.sh" },
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: EUPL-1.2 license",
     "Operating System :: OS Independent",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -30,6 +30,7 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/tsandrini/vrmapi-async"
 "Repository" = "https://github.com/tsandrini/vrmapi-async"
+"Documentation" = "https://tsandrini.github.io/vrmapi-async/"
 
 [project.optional-dependencies]
 test = [
@@ -40,7 +41,18 @@ test = [
 dev = [
     "ruff>=0.4.0",
     "vrmapi-async[test]",
+    "vrmapi-async[docs]",
 ]
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=0.27.0",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-literate-nav>=0.6.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["vrmapi_async*"]
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
@@ -48,16 +60,32 @@ testpaths = [
     "tests",
 ]
 
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "pep440"
+version_provider = "uv"
+update_changelog_on_bump = true
+major_version_zero = true
 [dependency-groups]
 dev = [
     "ipython>=8.18.1",
     "ruff>=0.4.0",
     {include-group = "test"},
+    {include-group = "docs"},
 ]
 test = [
     "pytest>=8.3.5",
     "pytest-asyncio>=0.23.0",
     "respx>=0.22.0",
+]
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=0.27.0",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-literate-nav>=0.6.0",
 ]
 
 [tool.mypy]

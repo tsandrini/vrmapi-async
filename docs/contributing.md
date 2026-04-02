@@ -1,0 +1,162 @@
+# Contributing
+
+## Development setup
+
+This project uses [Nix](https://nixos.org/) for reproducible
+development environments with [direnv](https://direnv.net/)
+for seamless shell integration.
+
+### Install Nix
+
+If you don't have Nix yet, install it with the
+[nix-installer](https://github.com/NixOS/nix-installer):
+
+```bash
+curl -sSfL https://artifacts.nixos.org/nix-installer \
+  | sh -s -- install
+```
+
+### Install direnv
+
+Once Nix is available, install direnv and its Nix integration:
+
+```bash
+nix profile install nixpkgs#direnv nixpkgs#nix-direnv
+```
+
+Add the direnv hook to your shell
+(e.g. for bash, add to `~/.bashrc`):
+
+```bash
+eval "$(direnv hook bash)"
+```
+
+See the [direnv docs](https://direnv.net/docs/hook.html)
+for zsh/fish/other shells.
+
+### Clone and enter the devshell
+
+```bash
+git clone https://github.com/tsandrini/vrmapi-async.git
+cd vrmapi-async
+direnv allow
+```
+
+direnv will automatically activate the Nix devshell whenever
+you `cd` into the project. All tools (Python, uv, pre-commit,
+etc.) are provided by the shell.
+
+### Without Nix
+
+If you prefer not to use Nix, install dependencies with
+[uv](https://docs.astral.sh/uv/):
+
+```bash
+uv sync --all-groups
+```
+
+!!! warning
+    Nix is not required for development, but all CI checks,
+    PRs, and releases are validated against `nix flake check`
+    and the Nix-managed pre-commit hooks. Make sure your
+    changes pass these before submitting.
+
+## Running tests
+
+```bash
+# All offline tests
+pytest tests/ -v -m "not online"
+
+# Online smoke tests (hits real VRM demo API)
+pytest tests/ -v -m online
+
+# Single file
+pytest tests/test_users.py -v
+```
+
+## Linting and formatting
+
+Pre-commit hooks handle linting. Run them on all files:
+
+```bash
+pre-commit run --all-files
+```
+
+Key hooks: `ruff` (lint + fix), `ruff-format`, `mypy`,
+`pyupgrade`, `typos`.
+
+Some hooks auto-fix --- re-run after fixes are applied.
+
+## Adding a new endpoint
+
+1. **Add the route** in `routes.py`
+2. **Add models** in `client/<namespace>/schema.py` ---
+   response model inheriting `BaseResponseModel`,
+   nested models inheriting `BaseModel`
+3. **Add the method** in `client/<namespace>/api.py` ---
+   async method calling `self._request()`
+4. **Add tests** in `tests/test_<namespace>.py` ---
+   use `respx` to mock the HTTP layer
+
+### Namespace method pattern
+
+```python
+async def get_something(
+    self, site_id: int
+) -> SomethingResponse:
+    """Fetch something for a site.
+
+    :param site_id: The installation/site ID.
+    :returns: Parsed response with records.
+    """
+    url = self.routes.SOME_ROUTE.format(site_id=site_id)
+    response_data = await self._request("GET", url)
+    return SomethingResponse(**response_data)
+```
+
+### Pydantic model guidelines
+
+- Use `extra="ignore"` (inherited default) --- the VRM API
+  returns undocumented fields frequently
+- Override to `extra="allow"` only for genuinely
+  unpredictable structures
+- Use `AliasChoices` for fields that have different names
+  across endpoints
+- All response models get `_raw: PrivateAttr` automatically
+  via `BaseResponseModel`
+
+### Testing pattern
+
+```python
+GET_SOMETHING_PAYLOAD = {
+    "success": True,
+    "records": [
+        {"idSite": 1001, "someCamelField": "value"},
+    ],
+}
+
+@pytest.mark.asyncio
+class TestGetSomething:
+    async def test_returns_parsed_response(self, mock_api):
+        respx.get(
+            f"{BASE}/installations/{SITE_ID}/something"
+        ).mock(
+            return_value=httpx.Response(
+                200, json=GET_SOMETHING_PAYLOAD
+            )
+        )
+        await mock_api.connect()
+        resp = await mock_api.installations.get_something(
+            SITE_ID
+        )
+        assert isinstance(resp, SomethingResponse)
+        assert resp.records[0].some_camel_field == "value"
+```
+
+## Code style
+
+- Docstrings on all public modules, classes, and functions
+  (ruff D100/D101/D102)
+- Type hints with return annotations on all functions
+- `X | None` over `Optional[X]`
+- All imports at module top level
