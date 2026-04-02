@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vrmapi-async"
-version = "0.0.0"
+version = "0.1.0"
 description = "A modern, async Python client for the Victron VRM API."
 readme = "README.md"
 requires-python = ">3.9.1,<4"
