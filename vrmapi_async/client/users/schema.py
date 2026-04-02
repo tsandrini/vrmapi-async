@@ -28,6 +28,7 @@ class User(BaseUser):
 
     # -- DEFINED BY DOCS --
     user_id: int = Field(validation_alias=AliasChoices("id", "user_id"))
+    access_level: int = 0
     # -- UNDOCUMENTED --
     access_token_id: int | None = Field(None, alias="idAccessToken")
 
@@ -179,6 +180,9 @@ class Site(BaseModel):
     currency_code: str | None = None
     currency_sign: str | None = None
     currency_name: str | None = None
+    restrict_node_red: bool = False
+    favorite: int = 0
+    is_system: int = Field(0, alias="isSystem")
     inverter_charger_control: bool
 
     @field_validator("phonenumber", mode="before")

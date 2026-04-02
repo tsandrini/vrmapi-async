@@ -41,6 +41,7 @@ ABOUT_ME_PAYLOAD = {
         "email": "test@example.com",
         "country": "CZ",
         "idAccessToken": None,
+        "accessLevel": 1,
     },
 }
 
@@ -74,6 +75,9 @@ SITE_RECORD = {
     "currencyCode": None,
     "currencySign": None,
     "currencyName": None,
+    "restrictNodeRed": False,
+    "favorite": 0,
+    "isSystem": 0,
     "inverterChargerControl": False,
 }
 
@@ -155,6 +159,7 @@ class TestAboutMe:
         assert resp.user.user_id == 42
         assert resp.user.name == "Test User"
         assert resp.user.email == "test@example.com"
+        assert resp.user.access_level == 1
 
     async def test_raw_preserved(self, mock_api):
         respx.get(f"{BASE}/users/me").mock(
@@ -187,6 +192,9 @@ class TestListInstallations:
         assert site.name == "My Solar Site"
         assert site.identifier == "abc123"
         assert site.user_id == USER_ID
+        assert site.restrict_node_red is False
+        assert site.favorite == 0
+        assert site.is_system == 0
 
     async def test_empty_records(self, mock_api):
         payload = {"success": True, "records": []}
