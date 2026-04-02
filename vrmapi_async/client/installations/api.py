@@ -1,6 +1,5 @@
 """Installations API namespace for VRM API client."""
 
-import logging
 from datetime import datetime
 from typing import Any
 
@@ -14,8 +13,6 @@ from .schema import (
     StatsResponse,
     StatsType,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class InstallationsNamespace(BaseNamespace):
@@ -115,10 +112,15 @@ class InstallationsNamespace(BaseNamespace):
         )
 
     async def list_users(self, site_id: int) -> ListUsersResponse:
-        """List users for a given installation (undocumented endpoint)."""
-        logger.warning(
-            "`list_users` endpoint is not documented in the official VRM API docs"
-        )
+        """List users for a given installation.
+
+        Returns all users, pending invites, pending access requests,
+        user groups, and site groups linked to the installation.
+        Requires full control or technician access level.
+
+        :param site_id: The installation ID.
+        :returns: A ListUsersResponse with users, invites, pending, etc.
+        """
         url = self.routes.INSTALLATIONS_USERS_LIST.format(site_id=site_id)
         response_data = await self._request("GET", url)
         return ListUsersResponse(**response_data)
